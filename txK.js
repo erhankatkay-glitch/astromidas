@@ -45,7 +45,7 @@ TX.AST = {
     cadent: ['{p} düşen bir evde: etkisi daha sessiz, daha çok arka planda ve zihinsel düzlemde çalışıyor.', '{p} düşen evde; arka planda çalışır.'],
     benefic: ['{p}, {q} destekleyici bir açı alıyor: bu konuda koruma, kolaylık ve doğru zamanda gelen yardım var.', '{p}, {q} destek alıyor.'],
     malefic: ['{p}, {q} zorlayıcı bir açı alıyor: burada sınavlar ve gerilimler yaşanabilir; ama aynı gerilim sizi güçlendiren dersin kaynağı.', '{p}, {q} baskı görüyor; sınav ve gerilim.'],
-    rules: ['Ayrıca {h} yönetiyor; bu yüzden bu konular da {p}’in durumuna göre şekilleniyor.', '{h} yöneticisi.']
+    rules: ['Ayrıca {h} yönetiyor; bu yüzden bu konular da {g} durumuna göre şekilleniyor.', '{h} yöneticisi.']
   },
   // Hayat alanları
   AREAS: [

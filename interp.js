@@ -72,7 +72,7 @@
     if (ben) { out.push(fill(C.benefic[T], { p: pn, q: AM.ek(nm(ben.o), 'abl') })); why.push(`${nm(ben.o)} ${ben.a.asp.n.toLocaleLowerCase('tr-TR')} (orb ${AM.dms(ben.a.orb)})`); }
     if (mal) { out.push(fill(C.malefic[T], { p: pn, q: AM.ek(nm(mal.o), 'abl') })); why.push(`${nm(mal.o)} ${mal.a.asp.n.toLocaleLowerCase('tr-TR')} (orb ${AM.dms(mal.a.orb)})`); }
     const rh = z.rulesHouses(id);
-    if (rh.length && !opt?.noRules) { out.push(fill(C.rules[T], { p: pn, h: rh.map(h => HN(h)).join(' ve ') })); why.push(`${rh.join(', ')}. evlerin yöneticisi`); }
+    if (rh.length && !opt?.noRules) { out.push(fill(C.rules[T], { p: pn, g: AM.ek(pn, 'gen'), h: rh.map(h => HN(h)).join(' ve ') })); why.push(`${rh.join(', ')}. evlerin yöneticisi`); }
     // destek/zorluk puanı
     let score = (p.dig ? Math.sign(p.dig.score) * Math.min(2, Math.abs(p.dig.score) / 3) : 0) + (ben ? 1 : 0) - (mal ? 1 : 0) + (p.retro && !['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'].includes(id) ? -0.3 : 0);
     return { text: out.join(' '), why, score, ben, mal };
@@ -157,11 +157,104 @@
     return { paras: out, why };
   }
 
+
+  /* ================= İlişki (sinastri + kompozit) ================= */
+  const KEYPAIR = [['Sun', 'Moon'], ['Venus', 'Mars'], ['Moon', 'Moon'], ['Sun', 'Sun'], ['Venus', 'Venus'], ['Sun', 'Venus'], ['Moon', 'Venus'], ['Asc', 'Sun'], ['Asc', 'Moon'], ['Asc', 'Venus']];
+  const isPair = (a, b, L) => L.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+  const SOFT = k => k === 'tri' || k === 'sex', HARD = k => k === 'squ' || k === 'opp';
+  const BEN = ['Venus', 'Jupiter', 'Sun', 'Moon', 'Mercury'], MAL = ['Saturn', 'Mars', 'Pluto', 'Uranus', 'Neptune'];
+  function syn(ca, cb, an, bn, textFn) {
+    const T = tone(), X2 = TX.AST2;
+    const asps = AM.aspectsOf(ca, cb).filter(x => x.asp.major && !(['Asc', 'MC'].includes(x.p.id) && ca.unknownTime) && !(['Asc', 'MC'].includes(x.q.id) && cb.unknownTime));
+    const w = x => (BASE[x.p.id] || 7) + (BASE[x.q.id] || 7) + Math.max(0, 12 - x.orb * 3) + (x.asp.k === 'con' ? 3 : 0) + (isPair(x.p.id, x.q.id, KEYPAIR) ? 6 : 0);
+    const MAINP = PLS.concat(['Asc', 'MC']), ranked = asps.filter(x => MAINP.includes(x.p.id) && MAINP.includes(x.q.id)).map(x => ({ x, w: w(x) })).sort((u, v) => v.w - u.w);
+    const themes = ranked.slice(0, 5).map(({ x, w }) => ({ title: `${AM.ek(an, 'gen')} ${nm(x.p.id)} – ${AM.ek(bn, 'gen')} ${nm(x.q.id)} ${x.asp.n.toLocaleLowerCase('tr-TR')}`, text: textFn(x, an, bn), why: [`orb ${AM.dms(x.orb)}`, `ağırlık ${w.toFixed(1)}${isPair(x.p.id, x.q.id, KEYPAIR) ? ' (ilişkinin anahtar çiftlerinden)' : ''}`] }));
+    const areas = X2.SYN.map(ar => {
+      const cs = asps.filter(x => isPair(x.p.id, x.q.id, ar.pairs)); let sc = 0; const why = [];
+      for (const x of cs) { const f = x.orb < 2 ? 1.5 : 1; let v = SOFT(x.asp.k) ? 1.2 : HARD(x.asp.k) ? -1 : (BEN.includes(x.p.id) && BEN.includes(x.q.id) ? 0.9 : MAL.includes(x.p.id) || MAL.includes(x.q.id) ? -0.3 : 0.5); sc += v * f; why.push(`${AM.ek(an, 'gen')} ${nm(x.p.id)} ${x.asp.n.toLocaleLowerCase('tr-TR')} ${AM.ek(bn, 'gen')} ${nm(x.q.id)} (orb ${AM.dms(x.orb)})`); }
+      const v = !cs.length ? 'none' : sc > 1 ? 'good' : sc < -1 ? 'hard' : 'mixed';
+      const top = cs.slice().sort((u, v2) => u.orb - v2.orb).slice(0, 2).map(x => textFn(x, an, bn));
+      return { k: ar.k, n: ar.n, verdict: v, score: sc, paras: [ar[v][T]].concat(top), why: why.concat([`alan puanı ${sc.toFixed(1)}`]) };
+    });
+    const ovl = [];
+    for (const [c1, c2, n1, n2] of [[ca, cb, an, bn], [cb, ca, bn, an]]) {
+      if (c2.unknownTime) continue;
+      for (const id of ['Sun', 'Moon', 'Venus', 'Mars', 'Jupiter', 'Saturn']) { const p = c1.get(id); if (!p) continue; const h = A.houseOf(p.lon, c2.houses.cusps); if (X2.OVL[h]) ovl.push({ t: `${AM.ek(n1, 'gen')} ${AM.ek(nm(id), 'poss')}, ${AM.ek(n2, 'gen')} ${h}. evine düşüyor: ${n1}, ${P2(id)} enerjisiyle ${AM.ek(n2, 'dat')} ${X2.OVL[h]}.`, why: `${nm(id)} ${fmtL(p.lon)} → ${n2} ${h}. ev`, w: (BASE[id] || 5) + ([7, 5, 8, 1].includes(h) ? 4 : 0) }); }
+    }
+    ovl.sort((u, v) => v.w - u.w);
+    return { themes, areas, ovl: ovl.slice(0, 8), soft: asps.filter(x => SOFT(x.asp.k)).length, hard: asps.filter(x => HARD(x.asp.k)).length, con: asps.filter(x => x.asp.k === 'con').length, n: asps.length };
+  }
+  const P2 = id => (TX.P[id] ? TX.P[id].k.split(',').slice(0, 2).join(' ve ') : nm(id));
+  const fmtL = l => AM.fmtLon(l);
+  function relTiming(k, jd) {
+    const sid = k.calc && k.calc.zodiac === 'S', L = (b, j) => A.norm(A.rawLon(b, j).lon - (sid ? A.ayanamsa(j) : 0)), hits = [];
+    for (const b of ['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']) for (const id of ['Sun', 'Moon', 'Venus', 'Mars', 'Asc']) { const np = k.get(id); if (!np) continue; for (const [a, kk, n] of [[0, 'con', 'kavuşum'], [90, 'squ', 'kare'], [180, 'opp', 'karşıt'], [120, 'tri', 'üçgen'], [60, 'sex', 'altmışlık']]) { const d = Math.abs(Math.abs(A.wrap180(L(b, jd) - np.lon)) - a); if (d < 2) hits.push({ b, id, kk, n, d }); } }
+    hits.sort((u, v) => u.d - v.d);
+    if (!hits.length) return { paras: ['Şu an ilişkinin kompozit haritasına dar açı yapan yavaş bir transit yok; ilişki kendi doğal ritminde ilerliyor.'], why: [] };
+    const h = hits.slice(0, 3);
+    return { paras: [`İlişkinin kendisine dokunan güncel transitler: ${h.map(x => `${nm(x.b)}, kompozit ${nm(x.id)} ile ${x.n} (orb ${x.d.toFixed(1)}°)`).join('; ')}.`, (TX.TRN[h[0].b] && TX.TRN[h[0].b][h[0].id] ? 'İlişki açısından: ' + TX.TRN[h[0].b][h[0].id].replace(/\bsiz(in|e|i)?\b/g, m => m) : '') + ' ' + (TX.TRASP[h[0].kk] || '')].filter(Boolean), why: h.map(x => `transit ${nm(x.b)} ${x.n} kompozit ${nm(x.id)} (${x.d.toFixed(1)}°)`) };
+  }
+
+  /* ================= Solar return yılı ================= */
+  function sr(src, nat, jd) {
+    const zS = analyze(src), why = [], paras = [], T = tone();
+    const asc = src.get('Asc'), lordId = AM.rulerOf(asc.sign, modernOf(src)), lord = src.get(lordId);
+    paras.push(`Bu yılın yükseleni ${A.SIGNS[asc.sign]}: yıla ${TX.AST.SQ[asc.sign]} bir tavırla giriyorsunuz. Yılın yöneticisi ${nm(lordId)}, solar return haritasında ${lord.house}. evde; yılın enerjisi en çok ${TX.H[lord.house].t} üzerinden akıyor.`);
+    const lc = condition(src, lordId, { short: true, noRules: true }); if (lc.text) paras.push(lc.text);
+    why.push(`SR Yükselen ${A.SIGNS[asc.sign]}, yöneticisi ${nm(lordId)} SR ${lord.house}. evde`, ...lc.why.map(w => `${nm(lordId)}: ${w}`));
+    if (!nat.unknownTime) { const nh = A.houseOf(asc.lon, nat.houses.cusps); paras.push(`SR Yükseleni doğum haritanızın ${nh}. evine düşüyor: yıl boyunca ${TX.H[nh].t} sizin için kişisel bir mesele hâline geliyor.`); why.push(`SR Yükselen natal ${nh}. evde`); }
+    // köşe evlerdeki gezegenler
+    const ang = zS.pts.filter(p => [1, 4, 7, 10].includes(p.house)).sort((u, v) => (BASE[v.id] - BASE[u.id]));
+    for (const hh of [1, 10, 7, 4]) { const L = ang.filter(p => p.house === hh); if (!L.length) continue; paras.push(`Solar return haritasında ${hh}. evde, köşede ${L.map(p => nm(p.id)).join(', ')} ${L.length > 1 ? 'var' : 'bulunuyor'}: ${TX.AST2.SRANG[hh]}; öne çıkan konular: ${L.map(p => P2(p.id)).join(', ')}.`); why.push(...L.map(p => `SR ${nm(p.id)} ${hh}. ev (köşe)`)); }
+    // vurgulu evler
+    const top = zS.HW.map((w, h) => [h, w]).slice(1).sort((a, b) => b[1] - a[1]).slice(0, 3).filter(x => x[1] > 6);
+    const houses = top.map(([h, w]) => ({ h, w, text: `${h}. ev — ${TX.H[h].n}: ${TX.SRHOUSE[h]}`, why: zS.Hwhy[h].concat([`ağırlık ${w.toFixed(1)}`]) }));
+    // SR gezegenleri natal noktalarda
+    const con = [];
+    for (const p of zS.pts) for (const id of ['Sun', 'Moon', 'Venus', 'Mars', 'Jupiter', 'Saturn'].concat(nat.unknownTime ? [] : ['Asc', 'MC'])) { const q = nat.get(id); const d = Math.abs(A.wrap180(p.lon - q.lon)); if (d < 2 && !(p.id === 'Sun' && id === 'Sun')) con.push({ p: p.id, id, d }); }
+    con.sort((u, v) => u.d - v.d);
+    if (con.length) { paras.push(`Yılın haritası doğum haritanızla şu noktalarda buluşuyor: ${con.slice(0, 4).map(x => `SR ${nm(x.p)} natal ${nm(x.id)} üzerinde (${x.d.toFixed(1)}°)`).join('; ')}. Bu temas noktaları yılın en hissedilir olaylarını işaret eder.`); why.push(...con.slice(0, 4).map(x => `SR ${nm(x.p)} ☌ natal ${nm(x.id)} ${x.d.toFixed(1)}°`)); }
+    // profeksiyon yöneticisi
+    const age = (jd - nat.jd) / 365.2425; if (age >= 0) { const pr = B.profection(nat, age), pl = src.get(pr.lord); if (pl) { paras.push(`Profeksiyon yöneticisi ${nm(pr.lord)} (yılın zaman yöneticisi) solar return haritasında ${pl.house}. evde${[1, 4, 7, 10].includes(pl.house) ? ', köşede: bu yıl onun konuları çok güçlü işler' : [3, 6, 9, 12].includes(pl.house) ? ': etkisi daha sessiz ve içsel' : ''}.`); why.push(`profeksiyon ${pr.house}. ev, yöneticisi ${nm(pr.lord)} SR ${pl.house}. ev`); } }
+    return { paras, houses, why };
+  }
+
+  /* ================= Transit yılı ================= */
+  const TRW = { Pluto: 6, Neptune: 5, Uranus: 5, Saturn: 5, Jupiter: 4, Mars: 1 };
+  const AK = { 0: ['con', 'kavuşum'], 60: ['sex', 'altmışlık'], 90: ['squ', 'kare'], 120: ['tri', 'üçgen'], 180: ['opp', 'karşıt'] };
+  function transitYear(nat, jd, hits) {
+    const z = analyze(nat), groups = {};
+    for (const h of hits) { const key = h.tr + '|' + h.nat + '|' + h.asp; (groups[key] = groups[key] || []).push(h); }
+    const imp = id => z.W[id] != null ? z.W[id] : id === 'Asc' || id === 'MC' ? 22 : 6;
+    const G = Object.values(groups).map(L => { const h = L[0], [k, n] = AK[h.asp]; const w = (TRW[h.tr] || 1) * (['con', 'opp', 'squ'].includes(k) ? 1.2 : 0.8) + imp(h.nat) / 4 + (L.length > 1 ? 2 : 0); return { tr: h.tr, nat: h.nat, k, n, L, w }; }).sort((u, v) => v.w - u.w);
+    const age = (jd - nat.jd) / 365.2425, pr = age >= 0 ? B.profection(nat, age) : null;
+    const themes = G.filter(g => g.tr !== 'Mars').slice(0, 6).map(g => {
+      const np = nat.get(g.nat), hh = nat.unknownTime || !np || ['Asc', 'MC'].includes(g.nat) ? null : np.house;
+      const dates = g.L.map(x => AM.fmtShort(x.jd) + (x.retro ? ' (retro)' : '')).join(', ');
+      const base = TX.TRN[g.tr] && TX.TRN[g.tr][g.nat] ? TX.TRN[g.tr][g.nat] : `${cap2(TX.DAY.PL[g.tr])} natal ${nm(g.nat)} temanıza dokunuyor.`;
+      const lordNote = pr && (g.tr === pr.lord || g.nat === pr.lord) ? ` Bu transit yılın zaman yöneticisi ${nm(pr.lord)} ile ilgili olduğu için etkisi daha da belirgin.` : '';
+      return { title: `${nm(g.tr)} ${g.n} natal ${nm(g.nat)}`, text: `${base} ${TX.TRASP[g.k] || ''}${hh ? ` Hayatınızda en çok ${TX.H[hh].t} alanında hissedilir.` : ''}${g.L.length > 1 ? ` Açı ${g.L.length} kez tam oluyor (${dates}); süreç bir başlangıç, bir sınav ve bir sonuç evresiyle ilerler.` : ` Tam olduğu tarih: ${dates}.`}${lordNote}`, why: [`transit ağırlığı ${TRW[g.tr]}`, `natal ${nm(g.nat)} önemi ${imp(g.nat).toFixed(0)}`, `${g.L.length} geçiş`].concat(lordNote ? [`yıl yöneticisi ${nm(pr.lord)}`] : []) };
+    });
+    // çeyrekler
+    const Q = [0, 1, 2, 3].map(i => { const a = jd + i * 91.3, b = a + 91.3, L = G.flatMap(g => g.L.filter(x => x.jd >= a && x.jd < b).map(x => ({ g, x }))).sort((u, v) => v.g.w - u.g.w);
+      const tens = o => ['squ', 'opp'].includes(o.g.k) || (o.g.k === 'con' && ['Saturn', 'Pluto', 'Uranus', 'Neptune', 'Mars'].includes(o.g.tr)), ease = o => ['tri', 'sex'].includes(o.g.k) || (o.g.k === 'con' && o.g.tr === 'Jupiter');
+      const hard = L.filter(tens).reduce((a, o) => a + o.g.w, 0) / 4, soft = L.filter(ease).reduce((a, o) => a + o.g.w, 0) / 4;
+      const tone2 = !L.length ? 'Sakin bir dönem: büyük transit isabeti yok, mevcut işleri sürdürmek ve dinlenmek için uygun.' : hard > soft + 1 ? 'Gerilimli ve yoğun bir dönem: kararlar, sınavlar ve dönüm noktaları.' : soft > hard + 1 ? 'Destekli ve akışkan bir dönem: fırsatlar ve kolaylaşan süreçler.' : 'Karışık bir dönem: hem fırsat hem sınav bir arada.';
+      return { t: `${TX.AST2.Q[i]} (${AM.fmtShort(a)} – ${AM.fmtShort(b)})`, tone: tone2, items: L.slice(0, 5).sort((u, v) => u.x.jd - v.x.jd).map(o => `${AM.fmtShort(o.x.jd)} · ${nm(o.g.tr)} ${o.g.n} natal ${nm(o.g.nat)}${o.x.retro ? ' (retro)' : ''}`) }; });
+    // hayat alanları etkisi
+    const hcount = {}; if (!nat.unknownTime) for (const g of G.filter(g => g.tr !== 'Mars')) { const np = nat.get(g.nat); if (np && np.house) hcount[np.house] = (hcount[np.house] || 0) + g.w; }
+    const topH = Object.entries(hcount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([h]) => +h);
+    const summary = `${pr ? `Profeksiyonla bu yıl ${pr.house}. ev (${TX.H[pr.house].n.toLocaleLowerCase('tr-TR')}) aktif, yılın zaman yöneticisi ${nm(pr.lord)}. ` : ''}Önümüzdeki 12 ayın en belirleyici transiti ${themes[0] ? themes[0].title : 'yok'}.${topH.length ? ` Transitlerin en çok dokunduğu hayat alanları: ${topH.map(h => TX.H[h].n.toLocaleLowerCase('tr-TR')).join(', ')}.` : ''}`;
+    return { themes, Q, summary, topH };
+  }
+  const cap2 = t => t ? t.charAt(0).toLocaleUpperCase('tr-TR') + t.slice(1) : t;
+
   /* ---------- HTML yardımcıları ---------- */
   const whyHTML = w => w && w.length ? `<details class="why"><summary>Neden böyle söylüyorum?</summary><ul>${w.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>` : '';
   function themesHTML(c, n) {
     const T = themes(c, n), CN = X().CONN;
-    return T.map((t, i) => `<h3>${i + 1}. ${esc(t.title)}</h3><p>${i > 0 && i % 2 === 0 ? esc(CN[i % CN.length]) + ', ' : ''}${esc(i > 0 && i % 2 === 0 ? t.text.charAt(0).toLocaleLowerCase('tr-TR') + t.text.slice(1) : t.text)}</p>${whyHTML(t.why)}`).join('');
+    const proper = t => /^(Güneş|Ay|Merkür|Venüs|Mars|Jüpiter|Satürn|Uranüs|Neptün|Plüton|Kariyer|Yükselen)\b/.test(t);
+    return T.map((t, i) => { const useC = i > 0 && i % 2 === 0; return `<h3>${i + 1}. ${esc(t.title)}</h3><p>${useC ? esc(CN[i % CN.length]) + (proper(t.text) ? ': ' : ', ') : ''}${esc(useC && !proper(t.text) ? t.text.charAt(0).toLocaleLowerCase('tr-TR') + t.text.slice(1) : t.text)}</p>${whyHTML(t.why)}`; }).join('');
   }
   function areasHTML(c, focus) {
     let L = areas(c); if (focus && focus !== 'genel') L = L.filter(a => a.k === focus).concat(L.filter(a => a.k !== focus));
@@ -171,5 +264,5 @@
   function timingHTML(c, jd) { const t = timing(c, jd); return t.paras.map(p => `<p>${esc(p)}</p>`).join('') + whyHTML(t.why); }
   function conditionHTML(c, id) { const r = condition(c, id); return r.text ? `<p class="small"><b>Durum:</b> ${esc(r.text)}</p>${whyHTML(r.why)}` : ''; }
 
-  root.ASTROLOG = { analyze, condition, themes, areas, area, timing, themesHTML, areasHTML, timingHTML, conditionHTML, whyHTML };
+  root.ASTROLOG = { syn, relTiming, sr, transitYear, analyze, condition, themes, areas, area, timing, themesHTML, areasHTML, timingHTML, conditionHTML, whyHTML };
 })(window);

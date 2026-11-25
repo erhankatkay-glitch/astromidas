@@ -428,7 +428,7 @@
     if (sub === 'sinastri') {
       const ia = aspectsOf(ca, cb, { staticB: false }).filter(x => !['Vertex'].includes(x.p.id));
       h += `<div class="wheelbox">${wheel(ca, { uid: 's', outer: pointsFor(cb).filter(x => !['Asc', 'MC', 'Vertex'].includes(x.id)), aspects: ia.filter(x => x.asp.major) })}</div><p class="small muted" style="text-align:center">İç çark: ${esc(a.name)} · dış halka (mavi): ${esc(b.name)}</p>
-        <div class="row" style="justify-content:center"><button class="btn" data-act="report" data-kind="syn">Uyum raporu oluştur</button></div>
+        ${repOpts('nofocus')}<div class="row" style="justify-content:center"><button class="btn" data-act="report" data-kind="syn">Uyum raporu oluştur</button></div>
         <h2>Karşılıklı açılar</h2><div class="list">${ia.map(x => `<div><span class="${aspClass(x.asp.k)}">${G(x.p.id)} ${ASPG[x.asp.k]} ${G(x.q.id)}</span> <span class="small">${esc(synText(x, a.name, b.name))}</span></div>`).join('')}</div>
         <h2>Ev yerleşimleri</h2><div class="grid2"><div><h3>${esc(b.name)} gezegenleri, ${esc(a.name)} evlerinde</h3>${B.overlays(cb, ca).map(o => `<div class="small">${G(o.id)} ${esc(nm(o.id))} → ${o.house}. ev</div>`).join('')}</div><div><h3>${esc(a.name)} gezegenleri, ${esc(b.name)} evlerinde</h3>${B.overlays(ca, cb).map(o => `<div class="small">${G(o.id)} ${esc(nm(o.id))} → ${o.house}. ev</div>`).join('')}</div></div>`;
     } else if (sub === 'kompozit') {
@@ -461,7 +461,7 @@
       const tp = pointsFor(tr).filter(x => !['Asc', 'MC', 'Vertex', 'Fortune'].includes(x.id)), asps = aspectsOf({ ...tr, get: id => tp.find(x => x.id === id) || null }, nat, { fixedOrb: 1.5, staticB: true }).filter(a => tp.includes(a.p));
       const hits = B.transitHits(nat, jd, 365, ['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'], calcSettings());
       h += `<div class="wheelbox">${wheel(nat, { uid: 't', outer: tp, aspects: asps.filter(a => a.asp.major) })}</div><p class="small muted" style="text-align:center">İç çark natal · dış halka transit (${fmtDate(jd)})</p>
-        <div class="row" style="justify-content:center"><button class="btn" data-act="report" data-kind="transit">12 aylık transit raporu</button></div>
+        ${repOpts('nofocus')}<div class="row" style="justify-content:center"><button class="btn" data-act="report" data-kind="transit">12 aylık transit raporu</button></div>
         <h2>Yavaş gezegenler hangi evinizden geçiyor?</h2><div class="list">${['Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'].map(id => { const x = tr.get(id); return `<div>${G(id)} <b>${esc(nm(id))}</b> natal ${x.nhouse}. evinizde (${fmtLon(x.lon)})${x.retro ? ' · retro' : ''}<br><span class="small muted">${esc(nm(id))} ${esc(TX.TRANSIT[id])}; bu dönemde etkisi ${esc(TX.H[x.nhouse].t)} alanında yaşanır.</span></div>`; }).join('')}</div>
         <h2>Şu anki transitler (1,5°)</h2>${asps.length ? `<div class="list">${asps.map(a => `<div><span class="${aspClass(a.asp.k)}">${G(a.p.id)} ${ASPG[a.asp.k]} ${G(a.q.id)}</span> <b>Transit ${esc(nm(a.p.id))} ${esc(a.asp.n.toLowerCase())} natal ${esc(nm(a.q.id))}</b> <span class="small muted">${dms(a.orb)} ${a.applying ? 'yaklaşan' : 'ayrılan'}</span><br><span class="small">${esc(transitText(a.p.id, a.q.id, a.asp.k, nat))}</span></div>`).join('')}</div>` : '<p class="muted">Yok.</p>'}
         <h2>Önümüzdeki 12 ay: dış gezegen transitleri (tam isabet tarihleri)</h2>${timeline(hits, nat)}
@@ -514,7 +514,7 @@
     return `<div class="row" style="margin-top:10px"><button class="chip ${which === 'sr' ? 'on' : ''}" data-ret="sr">Solar return</button><button class="chip ${which === 'lr' ? 'on' : ''}" data-ret="lr">Lunar return</button><button class="chip ${S.retLoc === 'here' ? '' : 'on'}" data-retloc="birth">Doğum yeri</button><button class="chip ${S.retLoc === 'here' ? 'on' : ''}" data-retloc="here">Bulunduğum yer (${esc(here.name)})</button></div>
       <div class="wheelbox">${wheel(c, { uid: 'r', aspects: aspectsOf(c).filter(a => a.asp.major) })}</div>
       <p class="small muted" style="text-align:center">${which === 'sr' ? 'Solar return' : 'Lunar return'}: ${fmtDate(c.jd)} · ${esc(loc.name || '')}</p>
-      ${which === 'sr' ? `<div class="row" style="justify-content:center"><button class="btn" data-act="report" data-kind="sr">Solar return raporu</button></div><p>${esc(srText(src, nat))}</p>` : `<p>Lunar return Yükseleni ${A.SIGNS[lrc.get('Asc').sign]}; Ay ${lrc.get('Moon').house}. evde: bu ay duygusal odak ${TX.H[lrc.get('Moon').house].t} alanında.</p>`}
+      ${which === 'sr' ? `${repOpts('nofocus')}<div class="row" style="justify-content:center"><button class="btn" data-act="report" data-kind="sr">Solar return raporu</button></div><p>${esc(srText(src, nat))}</p>` : `<p>Lunar return Yükseleni ${A.SIGNS[lrc.get('Asc').sign]}; Ay ${lrc.get('Moon').house}. evde: bu ay duygusal odak ${TX.H[lrc.get('Moon').house].t} alanında.</p>`}
       ${posTable(c, pointsFor(c))}
       <h2>Gezegen dönüşleri</h2><div class="list">${pr.map(x => `<div><b>${G(x.b)} ${esc(nm(x.b))} dönüşü</b>: ${x.list.length ? x.list.map(j => fmtShort(j)).join(' · ') : 'bu aralıkta yok'}</div>`).join('')}</div>`;
   }
@@ -638,7 +638,7 @@
   }
   function repOpts(kind) {
     const F = [['genel', 'Genel okuma'], ['ask', 'Aşk ve ilişkiler'], ['kariyer', 'Kariyer'], ['para', 'Para'], ['aile', 'Aile ve ev'], ['saglik', 'Sağlık ve enerji'], ['iletisim', 'Eğitim ve iletişim'], ['ruh', 'Ruhsal yol']];
-    return `<div class="repopts"><div class="grid2"><div><label for="rep_focus">Danışanın sorusu / odak</label><select id="rep_focus">${F.map(([k, t]) => `<option value="${k}" ${(S.repFocus || 'genel') === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div><div><label for="rep_notes">Astrolog notu</label><select id="rep_notes"><option value="0" ${S.repNotes ? '' : 'selected'}>Ekleme</option><option value="1" ${S.repNotes ? 'selected' : ''}>Danışan defterinden ekle</option></select></div></div></div>`;
+    return `<div class="repopts"><div class="grid2">${kind === 'nofocus' ? '' : `<div><label for="rep_focus">Danışanın sorusu / odak</label><select id="rep_focus">${F.map(([k, t]) => `<option value="${k}" ${(S.repFocus || 'genel') === k ? 'selected' : ''}>${t}</option>`).join('')}</select></div>`}<div><label for="rep_notes">Astrolog notu</label><select id="rep_notes"><option value="0" ${S.repNotes ? '' : 'selected'}>Ekleme</option><option value="1" ${S.repNotes ? 'selected' : ''}>Danışan defterinden ekle</option></select></div></div></div>`;
   }
   function natalReport(p, kind) {
     const c = chartOf(p, kind === 'classic' ? { system: 'classic', hsys: 'W' } : kind === 'vedic' ? { system: 'vedic' } : null), inp = inputOf(p), asps = aspectsOf(c), sy = synth(c), modern = c.calc.system !== 'classic';
@@ -687,6 +687,8 @@
     s += t ? (k === 'con' ? t[0] : soft ? t[1] : hard ? t[2] : t[1]) : (soft || k === 'con' ? `Bu iki alan birbirini destekler; ${an} ve ${bn} bu konularda kolayca uyum yakalar.` : `Bu iki alan arasında sürtüşme vardır; farkındalıkla büyütücü bir dinamiğe dönüşür.`);
     return s;
   }
+  function noteHTML(p) { if (!S.repNotes || !p || !(p.notes || (p.sessions && p.sessions.length))) return ''; const ls = (p.sessions || []).slice(-3).reverse(); return `${p.notes ? `<p>${esc(p.notes).replace(/\n/g, '<br>')}</p>` : ''}${ls.length ? `<h3>Son görüşmeler</h3>${ls.map(x => `<p><b>${esc(x.date)}</b> · ${esc(x.topic || '')}<br>${esc(x.note || '').replace(/\n/g, '<br>')}</p>`).join('')}` : ''}`; }
+  const badgeV = v => `<span class="tag">${{ good: 'destekli', mixed: 'karışık', hard: 'emek isteyen', none: 'dolaylı' }[v]}</span>`;
   function synReport(a, b) {
     const ca = chartOf(a), cb = chartOf(b), ia = aspectsOf(ca, cb).filter(x => x.asp.major), k = B.composite(ca, cb, calcSettings()); k.calc = calcSettings();
     let n = 1, out = cover(`${a.name} & ${b.name} — Uyum Raporu`, 'Sinastri, ev yerleşimleri ve kompozit harita', wheel(ca, { uid: 'sr' + (uidN++), outer: pointsFor(cb).filter(x => !['Asc', 'MC', 'Vertex'].includes(x.id)), aspects: ia }));
@@ -694,18 +696,30 @@
     const key = ia.filter(x => ['Sun', 'Moon', 'Venus', 'Mars', 'Asc'].includes(x.p.id) && ['Sun', 'Moon', 'Venus', 'Mars', 'Asc'].includes(x.q.id));
     const el = (c, id) => c.get(id).sign % 4;
     out += pageWrap('Özet', ++n, `<p>İki harita arasında ${ia.length} majör açı var: ${soft} uyumlu, ${hard} zorlayıcı, ${con} kavuşum. ${soft > hard ? 'Uyumlu bağların ağırlığı, birlikteliğin doğal bir akış ve kolaylık taşıdığını gösterir.' : hard > soft ? 'Gerilimli bağların ağırlığı yoğun bir çekim ve karşılıklı büyüme getirir; iletişim ve sabır anahtardır.' : 'Uyum ile gerilim dengede; ilişki hem rahatlatıcı hem de geliştiricidir.'}</p><p>Ay’lar ${el(ca, 'Moon') === el(cb, 'Moon') ? 'aynı elementte: duygusal dilleriniz benzer.' : 'farklı elementlerde: birbirinizin duygusal ihtiyaçlarını öğrenmek zaman alır.'} Venüs–Mars bağları: ${ia.filter(x => (x.p.id === 'Venus' && x.q.id === 'Mars') || (x.p.id === 'Mars' && x.q.id === 'Venus')).map(x => x.asp.n.toLowerCase()).join(', ') || 'doğrudan majör açı yok'}.</p><h3>Anahtar temaslar</h3>${key.map(x => `<p><span class="${aspClass(x.asp.k)}">${G(x.p.id)} ${ASPG[x.asp.k]} ${G(x.q.id)}</span> ${esc(synText(x, a.name, b.name))}</p>`).join('') || '<p class="muted">Kişisel noktalar arasında majör temas yok.</p>'}`);
+    const AST = window.ASTROLOG, SY = AST ? AST.syn(ca, cb, a.name, b.name, synText) : null;
+    if (SY) {
+      out += pageWrap('İlişkinin ana temaları', ++n, `<p class="small muted">Bütün karşılıklı açılar ağırlıklandırıldı (gezegenlerin önemi, orb darlığı, ilişkinin anahtar çiftleri: Güneş–Ay, Venüs–Mars, Ay–Ay, Yükselen bağları); en belirleyici beşi önem sırasıyla.</p>${SY.themes.map((t, i) => `<h3>${i + 1}. ${esc(t.title)}</h3><p>${esc(t.text)}</p>${AST.whyHTML(t.why)}`).join('')}`);
+      out += pageWrap('İlişki alanları', ++n, `<p class="small muted">Her alan, o alana ait gezegen çiftlerinin karşılıklı açılarından değerlendirildi.</p>${SY.areas.map(r => `<h3>${esc(r.n)} ${badgeV(r.verdict)}</h3>${r.paras.map(t => `<p>${esc(t)}</p>`).join('')}${AST.whyHTML(r.why)}`).join('')}`);
+      if (SY.ovl.length) out += pageWrap('Birbirinizin hayatında nereye dokunuyorsunuz?', ++n, SY.ovl.map(o => `<p>${esc(o.t)}</p>`).join('') + AST.whyHTML(SY.ovl.map(o => o.why)));
+    }
     out += pageWrap('Tüm karşılıklı açılar', ++n, ia.map(x => `<p><span class="${aspClass(x.asp.k)}">${G(x.p.id)} ${ASPG[x.asp.k]} ${G(x.q.id)}</span> ${esc(synText(x, a.name, b.name))}</p>`).join(''));
     const ov = (c1, c2, n1, n2) => c2.unknownTime ? `<p class="muted">${esc(n2)} için doğum saati bilinmediğinden ev yerleşimleri hesaplanamaz.</p>` : B.overlays(c1, c2).filter(o => CORE.includes(o.id)).map(o => `<p><b>${esc(AM.ek(n1, 'gen'))} ${AM.ek(nm(o.id), 'poss')}, ${esc(AM.ek(n2, 'gen'))} ${o.house}. evinde:</b> ${esc(n1)}, ${esc(n2)}’ın ${TX.H[o.house].t} alanını ${P(o.id).k.split(',')[0]} temasıyla etkiler.</p>`).join('');
-    out += pageWrap('Ev yerleşimleri', ++n, ov(cb, ca, b.name, a.name) + ov(ca, cb, a.name, b.name));
-    out += pageWrap('Kompozit harita', ++n, `<div class="wheelbox" style="max-width:440px">${wheel(k, { uid: 'kc' + (uidN++), points: pointsFor(k), aspects: aspectsOf(k).filter(x => x.asp.major) })}</div><p>İlişkinin kendisinin haritası: kompozit Güneş ${A.SIGNS[k.get('Sun').sign]}, ${k.get('Sun').house}. evde — ilişkinin amacı ${TX.H[k.get('Sun').house].t} alanında parlar. Kompozit Ay ${A.SIGNS[k.get('Moon').sign]}: birlikteyken duygusal ihtiyaçlarınız ${TX.S[k.get('Moon').sign].st} karşılanır. Kompozit Venüs ${k.get('Venus').house}. evde: sevgi en çok ${TX.H[k.get('Venus').house].t} alanında ifade bulur.</p>`);
+    out += pageWrap('Ev yerleşimleri (tam liste)', ++n, ov(cb, ca, b.name, a.name) + ov(ca, cb, a.name, b.name));
+    out += pageWrap('Kompozit harita', ++n, `<div class="wheelbox" style="max-width:440px">${wheel(k, { uid: 'kc' + (uidN++), points: pointsFor(k), aspects: aspectsOf(k).filter(x => x.asp.major) })}</div><p>İlişkinin kendisinin haritası: kompozit Güneş ${A.SIGNS[k.get('Sun').sign]}, ${k.get('Sun').house}. evde — ilişkinin amacı ${TX.H[k.get('Sun').house].t} alanında parlar. Kompozit Ay ${A.SIGNS[k.get('Moon').sign]}: birlikteyken duygusal ihtiyaçlarınız ${TX.S[k.get('Moon').sign].st} karşılanır. Kompozit Venüs ${k.get('Venus').house}. evde: sevgi en çok ${TX.H[k.get('Venus').house].t} alanında ifade bulur.</p>${window.ASTROLOG ? '<h3>İlişkinin kendi ana temaları</h3>' + ASTROLOG.themesHTML(k, 3) : ''}`);
+    if (window.ASTROLOG) { const rt = ASTROLOG.relTiming(k, nowJD()); out += pageWrap('İlişkinin şu anki dönemi', ++n, rt.paras.map(t => `<p>${esc(t)}</p>`).join('') + ASTROLOG.whyHTML(rt.why)); }
+    const na = noteHTML(a), nb = noteHTML(b); if (na || nb) out += pageWrap('Astrolog notu', ++n, (na ? `<h3>${esc(a.name)}</h3>${na}` : '') + (nb ? `<h3>${esc(b.name)}</h3>${nb}` : ''));
     return out;
   }
   function srReport(p) {
     const nat = chartOf(p), jd = targetJD(), sr = B.nextReturn('Sun', nat.get('Sun').lon, jd - 366, calcSettings().zodiac === 'S' ? { sidereal: true } : null).filter(j => j > jd - 366)[0];
     const loc = S.retLoc === 'here' ? S.settings.here : { lat: +p.lat, lon: +p.lon, name: p.place }, c = A.chart({ jd: sr, lat: loc.lat, lon: loc.lon }, calcSettings()); c.calc = calcSettings();
     let n = 1, out = cover(`${p.name} — Solar Return ${new Date(A.utcFromJD(sr)).getUTCFullYear()}`, `${fmtDate(sr)} · ${esc(loc.name || '')}`, wheel(c, { uid: 'srw' + (uidN++), aspects: aspectsOf(c).filter(a => a.asp.major) }));
-    out += pageWrap('Özet', ++n, `<p>${esc(srText(c, nat))}</p>`);
-    out += pageWrap('Yılın gezegenleri', ++n, CORE.map(id => { const x = c.get(id); return `<p><b>${G(id)} ${nm(id)} ${x.house}. evde</b> (${fmtLon(x.lon)}): ${esc(TX.SRPL[id] || P(id).k)}: ${esc(TX.H[x.house].t)}. ${x.retro ? 'Gezegen retro olduğu için bu alanda geçmişe dönüş, gözden geçirme ve yeniden değerlendirme öne çıkar.' : ''}</p>`; }).join('') + posTable(c, pointsFor(c)));
+    const SR = window.ASTROLOG ? ASTROLOG.sr(c, nat, sr) : null;
+    out += pageWrap('Özet', ++n, `<p>${esc(srText(c, nat))}</p>` + (SR ? `<h3>Yılın astrolog okuması</h3>${SR.paras.map(t => `<p>${esc(t)}</p>`).join('')}${ASTROLOG.whyHTML(SR.why)}` : ''));
+    if (SR && SR.houses.length) out += pageWrap('Yılın öne çıkan alanları', ++n, SR.houses.map(h => `<h3>${esc(TX.H[h.h].n)}</h3><p>${esc(TX.SRHOUSE[h.h])}</p>${ASTROLOG.whyHTML(h.why)}`).join(''));
+    if (window.ASTROLOG) out += pageWrap('Bu yıl doğum haritanızda', ++n, ASTROLOG.timingHTML(nat, sr + 1));
+    out += pageWrap('Yılın gezegenleri', ++n, CORE.map(id => { const x = c.get(id); return `<p><b>${G(id)} ${nm(id)} ${x.house}. evde</b> (${fmtLon(x.lon)}): ${esc(TX.SRPL[id] || P(id).k)}: ${esc(TX.H[x.house].t)}. ${x.retro ? 'Gezegen retro olduğu için bu alanda geçmişe dönüş, gözden geçirme ve yeniden değerlendirme öne çıkar.' : ''}</p>${window.ASTROLOG ? ASTROLOG.conditionHTML(c, id) : ''}`; }).join('') + posTable(c, pointsFor(c)));
+    { const nt = noteHTML(p); if (nt) out += pageWrap('Astrolog notu', ++n, nt); }
     return out;
   }
   function transitReport(p) {
@@ -713,11 +727,18 @@
     const tr = B.transitChart(nat, jd, calcSettings()); tr.calc = calcSettings();
     let n = 1, out = cover(`${p.name} — 12 Aylık Transit Raporu`, `${fmtShort(jd)} – ${fmtShort(jd + 365)}`, wheel(nat, { uid: 'trw' + (uidN++), outer: pointsFor(tr).filter(x => !['Asc', 'MC', 'Vertex', 'Fortune'].includes(x.id)) }));
     const big = hits.filter(h => h.tr !== 'Mars');
-    out += pageWrap('Özet', ++n, `<p>Önümüzdeki 12 ayda ${big.length} yavaş gezegen isabeti var. En belirleyici temalar: ${[...new Set(big.map(h => nm(h.tr) + '–' + nm(h.nat)))].slice(0, 6).join(', ') || 'belirgin bir yavaş gezegen isabeti yok'}.</p>`);
+    const TY = window.ASTROLOG ? ASTROLOG.transitYear(nat, jd, hits) : null;
+    out += pageWrap('Özet', ++n, `<p>Önümüzdeki 12 ayda ${big.length} yavaş gezegen isabeti var.</p>${TY ? `<p>${esc(TY.summary)}</p><h3>Şu an hayatınızda</h3>${ASTROLOG.timingHTML(nat, jd)}` : ''}`);
+    if (TY) {
+      out += pageWrap('Yılın ana transitleri', ++n, `<p class="small muted">Transitler; gezegenin gücü, dokunduğu natal noktanın haritadaki önemi, açının türü ve kaç kez tam olduğu (retro geçişler) ile ağırlıklandırıldı.</p>${TY.themes.map((t, i) => `<h3>${i + 1}. ${esc(t.title)}</h3><p>${esc(t.text)}</p>${ASTROLOG.whyHTML(t.why)}`).join('') || '<p class="muted">Belirgin bir yavaş gezegen isabeti yok.</p>'}`);
+      out += pageWrap('Çeyrek çeyrek yıl', ++n, TY.Q.map(q => `<h3>${esc(q.t)}</h3><p>${esc(q.tone)}</p>${q.items.length ? `<ul>${q.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}`).join(''));
+    }
     out += pageWrap('Yavaş gezegenler', ++n, timeline(big, nat));
     out += pageWrap('Mars transitleri (eylem zamanlaması)', ++n, timeline(hits.filter(h => h.tr === 'Mars'), nat));
     const lun = A.lunations(jd, 365).filter(l => l.eclipse);
-    out += pageWrap('Tutulmalar', ++n, lun.map(l => `<p><b>${l.type === 'new' ? 'Güneş tutulması' : 'Ay tutulması'} (${l.ecl})</b> ${fmtDate(l.jd)} · ${fmtLon(l.lon)} · ${A.houseOf(l.lon, nat.houses.cusps)}. ev: ${TX.H[A.houseOf(l.lon, nat.houses.cusps)].t} alanında bir kapanış ya da başlangıç.</p>`).join('') || '<p class="muted">Yok.</p>');
+    out += pageWrap('Tutulmalar', ++n, lun.map(l => { const hits2 = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Asc', 'MC'].filter(id => nat.get(id) && !(nat.unknownTime && ['Asc', 'MC'].includes(id)) && Math.min(Math.abs(A.wrap180(l.lon - nat.get(id).lon)), Math.abs(Math.abs(A.wrap180(l.lon - nat.get(id).lon)) - 180)) < 3); const hh = nat.unknownTime ? null : A.houseOf(l.lon, nat.houses.cusps);
+      return `<p><b>${l.type === 'new' ? 'Güneş tutulması' : 'Ay tutulması'} (${l.ecl})</b> ${fmtDate(l.jd)} · ${fmtLon(l.lon)}${hh ? ` · ${hh}. ev: ${TX.H[hh].t} alanında bir kapanış ya da başlangıç.` : ''}${hits2.length ? ` <b>Kişisel etki güçlü:</b> tutulma natal ${hits2.map(nm).join(', ')} noktanızı tetikliyor; bu tarihten sonraki altı ay bu konular hayatınızda belirleyici olur.` : ''}</p>`; }).join('') || '<p class="muted">Yok.</p>');
+    { const nt = noteHTML(p); if (nt) out += pageWrap('Astrolog notu', ++n, nt); }
     return out;
   }
   function showReport(kind) {
