@@ -716,12 +716,16 @@
   function viewReport() {
     return `<div class="row noprint" style="margin:10px 0;position:sticky;top:0;z-index:5;background:rgba(11,18,38,.85);padding:8px 0;backdrop-filter:blur(8px)"><button class="btn ghost" data-act="closereport">‹ Geri</button><button class="btn" data-act="dlreport">İndir</button><button class="btn ghost" data-act="copyreport">Metni kopyala</button></div><div id="rep">${S.report.html}</div>`;
   }
-  async function downloadReport() {
+  async function downloadReport(onlyDoc) {
     const css = document.querySelector('style').textContent;
     const logoURI = await fetch('logo-full.jpg').then(r => r.blob()).then(b => new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b); })).catch(() => '');
-    const body = $('#rep').innerHTML.replace(/src="logo-full\.jpg"/g, `src="${logoURI}"`);
+    const toURI = f => fetch(f).then(r => r.blob()).then(b => new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(b); })).catch(() => '');
+    const skyURI = await toURI('sky-bg.jpg'), moonURI = await toURI('moon.jpg'), medalURI = await toURI('medal.png');
+    const body = $('#rep').innerHTML.replace(/src="logo-full\.jpg"/g, `src="${logoURI}"`).replace(/href="moon\.jpg"/g, `href="${moonURI}"`).replace(/src="medal\.png"/g, `src="${medalURI}"`);
     const doc = `<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AstroMidas — ${esc(S.report.name)}</title><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;600&family=Noto+Sans+Symbols&family=Noto+Sans+Symbols+2&display=swap" rel="stylesheet"><style>${css}
-@media print{body{background:#0b1226;-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{break-inside:avoid-page;page-break-after:always}}</style></head><body><div class="app" style="padding-bottom:20px">${body}<p class="noprint small muted" style="text-align:center">PDF için tarayıcıda Yazdır → PDF olarak kaydet.</p></div></body></html>`;
+html,body{background:#0c0f1e}body{background:#0c0f1e url(${skyURI}) center top/100% auto no-repeat fixed!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@media print{body{background:#0c0f1e!important}.page{break-inside:avoid-page;page-break-after:always;background:linear-gradient(170deg,rgba(110,126,165,.30),rgba(40,50,80,.38) 50%,rgba(20,26,46,.55)),url(${skyURI}) center top/cover no-repeat,#0c0f1e!important}}</style></head><body><div class="app tab-rapor" style="padding-bottom:20px">${body}<p class="noprint small muted" style="text-align:center">PDF için tarayıcıda Yazdır → PDF olarak kaydet.</p></div></body></html>`;
+    if (onlyDoc) return doc;
     try { const dl = await claude.use('downloads'); if (dl) { await dl.save({ filename: `AstroMidas-${S.report.name}-${S.report.kind}.html`.replace(/\s+/g, '_'), data: new Blob([doc], { type: 'text/html' }) }); toast('Rapor indirildi'); return; } } catch (e) { }
     try { window.print(); return; } catch (e) { }
     try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([doc], { type: 'text/html' })); a.download = `AstroMidas-${S.report.name}-${S.report.kind}.html`.replace(/\s+/g, '_'); document.body.appendChild(a); a.click(); a.remove(); toast('Rapor indirildi'); return; } catch (e) { }
@@ -785,7 +789,7 @@
       box.appendChild(el);
     }
   }
-  window.render = render;
+  window.render = render; window.__reportDoc = () => downloadReport(true);
 
   /* ---------- Olaylar ---------- */
   app.addEventListener('click', e => {
