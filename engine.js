@@ -16,21 +16,12 @@
   /* ---------- Zaman ---------- */
   function jdFromUTC(ms) { return ms / 86400000 + 2440587.5; }
   function utcFromJD(jd) { return (jd - 2440587.5) * 86400000; }
+  // ΔT (saniye): 1790–2400 arası Swiss Ephemeris'in kullandığı değerlerle (Stephenson–Morrison–Hohenkerk 2016 + IERS; gelecek için Swiss ekstrapolasyonu) yıllık tablo
+  const DT0 = 1790, DT = [21.08,20.93,20.75,20.56,20.34,20.11,19.85,19.58,19.28,18.96,18.62,18.26,17.89,17.52,17.16,16.82,16.52,16.27,16.07,15.95,15.90,15.94,16.05,16.21,16.39,16.58,16.74,16.86,16.91,16.86,16.71,16.43,16.03,15.53,14.96,14.32,13.65,12.96,12.27,11.60,10.97,10.40,9.88,9.42,9.02,8.67,8.38,8.15,7.97,7.85,7.77,7.76,7.79,7.87,7.99,8.15,8.35,8.58,8.85,9.14,9.46,9.78,10.09,10.34,10.48,10.46,10.28,9.98,9.64,9.34,9.14,9.09,9.10,9.06,8.85,8.34,7.46,6.31,5.00,3.67,2.45,1.44,0.63,-0.03,-0.57,-1.06,-1.51,-1.95,-2.36,-2.76,-3.15,-3.52,-3.85,-4.11,-4.28,-4.34,-4.25,-4.10,-3.93,-3.82,-3.84,-4.03,-4.33,-4.65,-4.89,-4.98,-4.83,-4.44,-3.82,-2.99,-1.94,-0.72,0.65,2.09,3.54,4.95,6.27,7.51,8.72,9.93,11.16,12.45,13.77,15.08,16.33,17.50,18.53,19.46,20.27,20.99,21.63,22.20,22.70,23.13,23.50,23.80,24.03,24.21,24.32,24.40,24.42,24.42,24.38,24.32,24.25,24.17,24.09,24.04,24.06,24.18,24.43,24.83,25.35,25.93,26.51,27.05,27.51,27.89,28.24,28.58,28.93,29.32,29.70,30.00,30.20,30.41,30.76,31.34,32.03,32.65,33.17,33.60,34.00,34.47,35.03,35.73,36.54,37.43,38.29,39.20,40.18,41.17,42.23,43.37,44.49,45.48,46.46,47.52,48.54,49.59,50.54,51.38,52.17,52.96,53.79,54.34,54.87,55.32,55.82,56.30,56.86,57.57,58.31,59.12,59.99,60.79,61.63,62.30,62.97,63.47,63.83,64.09,64.30,64.47,64.57,64.69,64.85,65.15,65.46,65.78,66.07,66.32,66.60,66.91,67.28,67.64,68.10,68.59,68.97,69.22,69.36,69.36,69.29,69.21,69.18,69.14,69.05,69.14,69.34,69.63,69.97,70.32,70.62,70.98,71.22,71.46,71.70,71.95,72.20,72.45,72.70,72.96,73.22,73.48,73.74,74.01,74.28,74.55,74.82,75.10,75.38,75.66,75.95,76.24,76.53,76.82,77.12,77.42,77.73,78.03,78.34,78.65,78.97,79.29,79.61,79.93,80.26,80.59,80.93,81.27,81.61,81.95,82.30,82.65,83.00,83.36,83.72,84.09,84.46,84.83,85.20,85.58,85.96,86.35,86.74,87.13,87.53,87.93,88.33,88.74,89.15,89.57,89.98,90.41,90.83,91.27,91.70,92.14,92.58,93.03,93.48,93.93,94.39,94.85,95.32,95.79,96.26,96.74,97.22,97.71,98.20,98.70,99.20,99.71,100.21,100.73,101.24,101.77,102.29,102.82,103.36,103.90,104.44,104.99,105.54,106.10,106.67,107.23,107.81,108.38,108.96,109.55,110.14,110.74,111.34,111.95,112.56,113.18,113.80,114.43,115.06,115.70,116.34,116.99,117.64,118.30,118.96,119.63,120.30,120.98,121.66,122.35,123.04,123.74,124.45,125.16,125.87,126.59,127.32,128.05,128.79,129.53,130.28,131.03,131.79,132.55,133.32,134.10,134.88,135.67,136.46,137.26,138.06,138.87,139.69,140.51,141.33,142.17,143.01,143.85,144.70,145.56,146.42,147.29,148.16,149.05,149.93,150.82,151.72,152.63,153.54,154.46,155.38,156.31,157.25,158.19,159.14,160.10,161.06,162.02,163.00,163.98,164.96,165.96,166.96,167.97,168.98,170.00,171.02,172.06,173.10,174.14,175.20,176.26,177.33,178.40,179.48,180.57,181.66,182.76,183.87,184.98,186.11,187.23,188.37,189.51,190.66,191.82,192.98,194.15,195.33,196.52,197.71,198.91,200.12,201.33,202.55,203.78,205.02,206.26,207.51,208.77,210.04,211.31,212.59,213.88,215.17,216.48,217.79,219.11,220.43,221.76,223.11,224.46,225.81,227.18,228.55,229.93,231.32,232.71,234.12,235.53,236.95,238.37,239.81,241.26,242.71,244.16,245.63,247.11,248.59,250.08,251.58,253.09,254.61,256.13,257.66,259.21,260.76,262.31,263.88,265.46,267.04,268.63,270.23,271.84,273.45,275.08,276.71,278.36,280.01,281.66,283.33,285.01,286.70,288.39,290.09,291.81,293.53,295.25,296.99,298.74,300.49,302.25,304.03,305.81,307.60,309.40,311.21,313.03,314.86,316.70,318.54,320.40,322.26,324.14,326.02,327.91,329.81,331.72,333.64,335.58,337.51,339.46,341.42,343.39,345.36,347.35,349.34,351.35,353.36,355.38,357.42,359.46,361.52,363.58,365.65,367.73,369.83,371.93,374.04,376.16,378.29,380.43,382.58,384.74,386.91,389.09,391.28,393.49,395.70,397.92,400.15,402.39,404.64,406.90,409.17,411.46,413.75,416.05,418.36,420.69,423.02,425.36,427.71,430.08,432.46,434.84,437.23,439.65,442.06,444.49,446.92,449.38,451.83,454.30,456.78,459.28,461.78,464.29,466.81,469.35,471.89,474.45,477.01,479.59,482.18,484.78,487.39,490.01,492.65,495.29,497.94,500.61,503.29,505.97,508.67,511.38,514.10,516.84,519.58];
   function deltaT(year) {
-    let t;
-    if (year < 1800) { const u = (year - 1820) / 100; return -20 + 32 * u * u; }
-    if (year < 1860) { t = year - 1800; return 13.72 - 0.332447 * t + 0.0068612 * t ** 2 + 0.0041116 * t ** 3 - 0.00037436 * t ** 4 + 0.0000121272 * t ** 5 - 0.0000001699 * t ** 6 + 0.000000000875 * t ** 7; }
-    if (year < 1900) { t = year - 1860; return 7.62 + 0.5737 * t - 0.251754 * t ** 2 + 0.01680668 * t ** 3 - 0.0004473624 * t ** 4 + t ** 5 / 233174; }
-    if (year < 1920) { t = year - 1900; return -2.79 + 1.494119 * t - 0.0598939 * t ** 2 + 0.0061966 * t ** 3 - 0.000197 * t ** 4; }
-    if (year < 1941) { t = year - 1920; return 21.20 + 0.84493 * t - 0.0761 * t ** 2 + 0.0020936 * t ** 3; }
-    if (year < 1961) { t = year - 1950; return 29.07 + 0.407 * t - t * t / 233 + t ** 3 / 2547; }
-    if (year < 1986) { t = year - 1975; return 45.45 + 1.067 * t - t * t / 260 - t ** 3 / 718; }
-    if (year < 2000) { t = year - 2000; return 63.86 + 0.3345 * t - 0.060374 * t ** 2 + 0.0017275 * t ** 3 + 0.000651814 * t ** 4 + 0.00002373599 * t ** 5; }
-    // ölçülen değerler (IERS) 2000–2025, sonrası yavaş artış varsayımı
-    const tab = [[2000, 63.83], [2005, 64.69], [2010, 66.07], [2015, 67.64], [2020, 69.36], [2025, 69.2]];
-    if (year >= 2025) return 69.2 + 0.1 * (year - 2025);
-    for (let i = 0; i < tab.length - 1; i++) if (year < tab[i + 1][0]) { const [y0, v0] = tab[i], [y1, v1] = tab[i + 1]; return v0 + (v1 - v0) * (year - y0) / (y1 - y0); }
-    return 69.2;
+    if (year >= DT0 && year < DT0 + DT.length - 1) { const i = Math.floor(year - DT0), f = year - DT0 - i; return DT[i] + (DT[i + 1] - DT[i]) * f; }
+    if (year < DT0) { const u = (year - 1820) / 100; return -20 + 32 * u * u; }
+    const u = (year - 1820) / 100, last = DT[DT.length - 1], ul = (DT0 + DT.length - 1 - 1820) / 100; return last + 32 * (u * u - ul * ul);
   }
   function jdTT(jdUT) { const y = 2000 + (jdUT - 2451545) / 365.25; return jdUT + deltaT(y) / 86400; }
 
@@ -39,15 +30,20 @@
     const f = new Intl.DateTimeFormat('en-US', { timeZone: zone, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
     const p = {}; for (const x of f.formatToParts(new Date(ms))) p[x.type] = x.value;
     const asUTC = Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
-    return Math.round((asUTC - Math.floor(ms / 1000) * 1000) / 60000);
+    return (asUTC - Math.floor(ms / 1000) * 1000) / 60000; // tam dakika değil: 1900 öncesi yerel ortalama saat (LMT) saniyeleri korunur
   }
   function localToUTC(y, mo, d, h, mi, zone) {
     const naive = Date.UTC(y, mo - 1, d, h, mi);
-    let off = tzOffsetMin(zone, naive);
-    let utc = naive - off * 60000;
-    const off2 = tzOffsetMin(zone, utc);
-    if (off2 !== off) utc = naive - off2 * 60000;
-    return { ms: utc, offsetMin: tzOffsetMin(zone, utc) };
+    // Yaz saati geçişleri: önceki ve sonraki gün ofsetiyle iki aday dene
+    const offA = tzOffsetMin(zone, naive - 864e5), offB = tzOffsetMin(zone, naive + 864e5);
+    const ok = off => Math.abs(tzOffsetMin(zone, naive - off * 60000) - off) < 1e-6;
+    const okA = ok(offA), okB = ok(offB);
+    let off, gap = false, ambiguous = false;
+    if (okA && okB && offA !== offB) { off = Math.max(offA, offB); ambiguous = true; } // geri alma saati: iki kez yaşanan saat, yaz saati varsayılır
+    else if (okA) off = offA; else if (okB) off = offB;
+    else { off = offA; gap = true; } // ileri alma: hiç yaşanmamış saat, geçiş öncesi ofsetle yorumlanır
+    const utc = naive - off * 60000;
+    return { ms: utc, offsetMin: off, gap, ambiguous };
   }
 
   /* ---------- Nütasyon ve eğiklik ---------- */
@@ -94,7 +90,10 @@
     const tru = norm(mean - 1.4979 * sin(2 * (D - F)) - 0.1500 * sin(M) - 0.1226 * sin(2 * D) + 0.1176 * sin(2 * F) - 0.0801 * sin(2 * (Mp - F)));
     // ortalama Ay apojesi (Kara Ay / Lilith)
     const perigee = 83.3532465 + 4069.0137287 * T - 0.0103200 * T * T - T ** 3 / 80053 + T ** 4 / 18999000;
-    return { mean, tru, lilith: norm(perigee + 180) };
+    // Swiss Ephemeris gibi: yörünge düzlemindeki apoje ekliptiğe izdüşürülür (aksi halde ±7′ hata)
+    const inc = 5.1453964, u = norm(perigee + 180 - mean);
+    const lil = norm(mean + atan2(sin(u) * cos(inc), cos(u))), lilLat = asin(sin(u) * sin(inc));
+    return { mean, tru, lilith: lil, lilithLat: lilLat };
   }
 
   /* ---------- Gezegenler ---------- */
@@ -212,13 +211,14 @@
       else if (body === 'Sun') r = geoSun(jdT);
       else if (body === 'Moon') { const m = moonGeo(T); r = { lon: m.lon, lat: m.lat, dist: m.dist }; }
       else if (body === 'NNode') { const n = lunarNodes(T); r = { lon: opts && opts.meanNode ? n.mean : n.tru, lat: 0 }; }
-      else if (body === 'Lilith') { r = { lon: lunarNodes(T).lilith, lat: 0 }; }
+      else if (body === 'Lilith') { const n = lunarNodes(T); r = { lon: n.lilith, lat: n.lilithLat }; }
       else if (ASTEROIDS.includes(body)) return null;
       else r = geoPlanet(body, jdT);
     }
     return { lon: norm(r.lon + nu.dpsi), lat: r.lat, dist: r.dist, eps: nu.eps, dpsi: nu.dpsi, src };
   }
-  function ayanamsa(jdUT) { const T = (jdUT - 2451545) / 36525; return 23.85706 + 1.396971 * T + 0.0003086 * T * T; }
+  // Lahiri; Swiss Ephemeris gibi gerçek (nütasyonlu) ayanamsa: görünen tropikal boylamdan çıkarılır
+  function ayanamsa(jdUT) { const T = (jdUT - 2451545) / 36525; return 23.85706 + 1.396971 * T + 0.0003086 * T * T + nutation((jdTT(jdUT) - 2451545) / 36525).dpsi; }
 
   function bodyPos(body, jdUT, opts) {
     const h = body === 'Moon' ? 0.05 : 0.25;
@@ -257,7 +257,8 @@
   function housesRAMC(ramc, lat, eps, sys) {
     const mc = mcFrom(ramc, eps), asc = ascFrom(ramc, lat, eps);
     const vlat = lat >= 0 ? 90 - lat : -90 - lat;
-    const vertex = ascFrom(ramc + 180, Math.abs(vlat) > 89.9999 ? Math.sign(vlat) * 89.9999 : vlat, eps);
+    let vertex = ascFrom(ramc + 180, Math.abs(vlat) > 89.9999 ? Math.sign(vlat) * 89.9999 : vlat, eps);
+    if (Math.abs(lat) <= eps && wrap180(vertex - mc) > 0) vertex = norm(vertex + 180); // Swiss: tropiklerde Vertex hep batıda
     // Ekvator yükseleni (Doğu noktası)
     const eastPt = ascFrom(ramc, 0, eps);
     let c = new Array(13), used = sys, note = '';
@@ -359,7 +360,7 @@
         if (o.fixedOrb != null) orb = as.major ? o.fixedOrb : Math.min(o.fixedOrb, 1);
         const d = Math.abs(sep - as.a);
         if (d <= orb) {
-          const dt = 0.1, sep2 = Math.abs(wrap180((p.lon + (p.speed || 0) * dt) - (q.lon + (o.staticB ? 0 : (q.speed || 0)) * dt)));
+          const dt = 0.002, sep2 = Math.abs(wrap180((p.lon + (p.speed || 0) * dt) - (q.lon + (o.staticB ? 0 : (q.speed || 0)) * dt)));
           const applying = Math.abs(sep2 - as.a) < d;
           res.push({ p, q, asp: as, orb: d, applying, exact: d < 0.1667 });
           break;
@@ -420,13 +421,29 @@
         const cur = f(j, t);
         if (prev < 0 && cur >= 0) {
           let a = j - 1, b = j; for (let i = 0; i < 40; i++) { const m = (a + b) / 2; if (f(m, t) < 0) a = m; else b = m; }
-          const jj = (a + b) / 2, mo = rawLon('Moon', jj), lat = Math.abs(mo.lat);
-          out.push({ jd: jj, type: t === 0 ? 'new' : 'full', lon: mo.lon, eclipse: t === 0 ? lat < 1.55 : lat < 1.45, moonLat: mo.lat });
+          const jj = (a + b) / 2, mo = rawLon('Moon', jj), su = rawLon('Sun', jj), ek = eclipseKind(t === 0 ? 'new' : 'full', mo, su);
+          out.push({ jd: jj, type: t === 0 ? 'new' : 'full', lon: mo.lon, eclipse: !!ek, ecl: ek, moonLat: mo.lat });
         }
         prev = cur;
       }
     }
     return out.sort((a, b) => a.jd - b.jd);
+  }
+  // Tutulma geometrisi: kavuşum/karşıtlık anındaki en yakın açısal uzaklık, Ay ve Güneş paralaksı ve yarıçaplarıyla
+  function eclipseKind(type, mo, su) {
+    const kmM = mo.dist > 1000 ? mo.dist : mo.dist * 149597870.7, auS = su.dist > 1000 ? su.dist / 149597870.7 : su.dist;
+    const piM = asin(6378.14 / kmM), sM = asin(1737.4 / kmM), sS = 959.63 / 3600 / auS, piS = 8.794 / 3600 / auS;
+    const sep = Math.abs(type === 'new' ? mo.lat - su.lat : mo.lat + su.lat) * 0.99597;
+    if (type === 'new') {
+      if (sep >= piM - piS + sS + sM) return null;
+      if (sep < piM - piS) return sM >= sS ? 'tam' : 'halkalı';
+      return 'parçalı';
+    }
+    const um = 1.02 * (piM + piS - sS), pe = 1.02 * (piM + piS + sS);
+    if (sep < um - sM) return 'tam';
+    if (sep < um + sM) return 'parçalı';
+    if (sep < pe + sM) return 'yarıgölge';
+    return null;
   }
   function stations(body, jd0, days) {
     const out = []; let prev = bodyPos(body, jd0).speed;

@@ -42,8 +42,10 @@
     return `<label>${label || 'Kişi'}</label><select data-pick="${field}">${S.people.map(p => `<option value="${esc(p.id)}" ${p.id === id ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`;
   }
   function timeNote(c) {
-    if (c.unknownTime) return `<div class="card small"><b>Doğum saati bilinmiyor.</b> Yükselen, MC ve ev yerleşimleri hesaplanamaz; harita, Güneş derecesi 1. ev başlangıcı olacak şekilde güneş haritası olarak çizildi. Ay gün içinde ${fmtLon(c.moonRange[0])} ile ${fmtLon(c.moonRange[1])} arasında ilerler; Ay’ın burcu bu aralıkta değişiyorsa yorumu dikkatle okuyun.</div>`;
-    if (c.approxAsc) return `<div class="card small"><b>Doğum saati yaklaşık (±30 dk).</b> Bu aralıkta Yükselen ${fmtLon(c.approxAsc[0])} ile ${fmtLon(c.approxAsc[1])} arasında değişir. Ev ve açı noktası (Yükselen, MC) yorumlarını bu belirsizlikle değerlendirin; Rektifikasyon aracı saati daraltmaya yardım eder.</div>`;
+    const dst = c.input && c.input.gap ? `<div class="card small"><b>Dikkat:</b> girilen saat, yaz saatine geçiş nedeniyle o gün yaşanmamış bir saat. Geçiş öncesi saat dilimiyle hesaplandı; doğum belgesini kontrol edin.</div>` : c.input && c.input.ambiguous ? `<div class="card small"><b>Dikkat:</b> girilen saat, yaz saatinden dönüşte iki kez yaşandı; yaz saati varsayıldı. Gerekirse kişiyi düzenleyip UTC farkını elle girin.</div>` : '';
+    if (dst && !c.unknownTime && !c.approxAsc) return dst;
+    if (c.unknownTime) return dst + `<div class="card small"><b>Doğum saati bilinmiyor.</b> Yükselen, MC ve ev yerleşimleri hesaplanamaz; harita, Güneş derecesi 1. ev başlangıcı olacak şekilde güneş haritası olarak çizildi. Ay gün içinde ${fmtLon(c.moonRange[0])} ile ${fmtLon(c.moonRange[1])} arasında ilerler; Ay’ın burcu bu aralıkta değişiyorsa yorumu dikkatle okuyun.</div>`;
+    if (c.approxAsc) return dst + `<div class="card small"><b>Doğum saati yaklaşık (±30 dk).</b> Bu aralıkta Yükselen ${fmtLon(c.approxAsc[0])} ile ${fmtLon(c.approxAsc[1])} arasında değişir. Ev ve açı noktası (Yükselen, MC) yorumlarını bu belirsizlikle değerlendirin; Rektifikasyon aracı saati daraltmaya yardım eder.</div>`;
     return '';
   }
   function needPerson() { return `<div class="card empty"><p>Önce bir doğum bilgisi ekleyin.</p><button class="btn" data-act="newperson">Kişi ekle</button></div>`; }
@@ -172,9 +174,11 @@
       const [y, mo, d] = $('#f_date').value.split('-').map(Number), [h, mi] = $('#f_time').value.split(':').map(Number), z = $('#f_zone').value, ov = $('#f_off').value.trim();
       const off = ov !== '' ? +ov : A.localToUTC(y, mo, d, h, mi, z).offsetMin;
       const ms = Date.UTC(y, mo - 1, d, h, mi) - off * 60000;
-      el.textContent = `UTC farkı: ${off >= 0 ? '+' : '−'}${pad(Math.floor(Math.abs(off) / 60))}:${pad(Math.abs(off) % 60)} · UTC: ${new Date(ms).toISOString().slice(0, 16).replace('T', ' ')}`;
+      const r = ov !== '' ? {} : A.localToUTC(y, mo, d, h, mi, z);
+      el.textContent = `UTC farkı: ${fmtOff(off)} · UTC: ${new Date(ms).toISOString().slice(0, 19).replace('T', ' ')}${r.gap ? ' · Dikkat: bu saat yaz saatine geçiş nedeniyle o gün yaşanmadı; belgedeki saati kontrol edin.' : r.ambiguous ? ' · Dikkat: bu saat yaz saatinden dönüşte iki kez yaşandı; yaz saati varsayıldı, gerekirse UTC farkını elle girin.' : ''}`;
     } catch (e) { el.textContent = ''; }
   }
+  function fmtOff(m) { const sg = m >= 0 ? '+' : '−', t = Math.round(Math.abs(m) * 60), hh = Math.floor(t / 3600), mm = Math.floor(t % 3600 / 60), ss = t % 60; return sg + pad(hh) + ':' + pad(mm) + (ss ? ':' + pad(ss) : ''); }
   function citySearch(q) {
     q = q.toLocaleLowerCase('tr').trim(); if (q.length < 2) return [];
     const n = s => s.toLocaleLowerCase('tr').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i');
@@ -255,7 +259,7 @@
     const items = [['natal', 'Natal'], ['klasik', 'Klasik Batı'], ['vedik', 'Vedik'], ['analiz', 'Analiz'], ['drakonik', 'Drakonik'], ['antisya', 'Antisya'], ['yildiz', 'Sabit yıldızlar'], ['karto', 'Kartografi'], ['rekt', 'Rektifikasyon']];
     const sub = curSub('harita', 'natal');
     let h = header() + `<div class="row" style="margin-top:12px"><div style="flex:1">${personPicker('active')}</div><button class="btn ghost" data-act="editperson" style="margin-top:26px">Düzenle</button><button class="btn ghost" data-act="newperson" style="margin-top:26px">+ Kişi</button></div>` + subnav('harita', items);
-    const inp = inputOf(p), meta = `<p class="small muted" style="text-align:center">${esc(p.name)} · ${fmtDate(inp.jd, p.zone)} (${esc(p.zone)}, UTC${inp.offsetMin >= 0 ? '+' : '−'}${pad(Math.floor(Math.abs(inp.offsetMin) / 60))}:${pad(Math.abs(inp.offsetMin) % 60)}) · ${esc(p.place || '')} ${(+p.lat).toFixed(4)}, ${(+p.lon).toFixed(4)}</p>`;
+    const inp = inputOf(p), meta = `<p class="small muted" style="text-align:center">${esc(p.name)} · ${fmtDate(inp.jd, p.zone)} (${esc(p.zone)}, UTC${fmtOff(inp.offsetMin)}) · ${esc(p.place || '')} ${(+p.lat).toFixed(4)}, ${(+p.lon).toFixed(4)}</p>`;
     if (sub === 'natal') {
       const c = chartOf(p), asps = aspectsOf(c);
       h += `${timeNote(c)}<div class="wheelbox">${wheel(c, { uid: 'n', aspects: asps.filter(a => a.asp.major || S.settings.minor) })}</div>${meta}
@@ -310,9 +314,9 @@
       <div class="row" style="justify-content:center"><button class="btn" data-act="report" data-kind="classic">Klasik raporu oluştur</button></div>
       <h2>Sekt</h2><p>${c.isDay ? 'Gündüz' : 'Gece'} haritası. Sekt ışığı: <b>${nm(sectLight)}</b>. Sektin hayırlısı <b>${nm(benef)}</b> en yapıcı biçimde çalışır; sekt dışı kötücül <b>${nm(malef)}</b> en zorlayıcı gezegendir.</p>
       <h2>Esansiyel değerler (Doroteus üçlükleri, Mısır sınırları, Keldani yüzleri)</h2><div class="scroll"><table class="stack"><thead><tr><th>Gezegen</th><th>Konum</th><th>Ev sahibi</th><th>Yücelim</th><th>Üçlük G/Gc</th><th>Sınır</th><th>Yüz</th><th class="n">Puan</th><th>Durum</th></tr></thead><tbody>${seven.map(dig).join('')}</tbody></table></div>
-      <p>Haritanın Almuteni (Asc, MC, Güneş, Ay ve Şans Noktası üzerinden): <b>${nm(alm.winner)}</b> <span class="muted small">(${alm.scores.slice(0, 3).map(([k, v]) => nm(k) + ' ' + v).join(', ')})</span></p>
+      <p>Haritanın Almuteni (Yükselen, MC, Güneş, Ay, Şans Lotu ve doğum öncesi yeni ay/dolunay üzerinden): <b>${nm(alm.winner)}</b> <span class="muted small">(${alm.scores.slice(0, 3).map(([k, v]) => nm(k) + ' ' + v).join(', ')})</span></p>
       <h2>Lot’lar</h2><p>Şans Lotu: ${fmtLon(c.get('Fortune').lon)} (${c.get('Fortune').house}. ev) · Ruh Lotu: ${fmtLon(c.get('Spirit').lon)} (${c.get('Spirit').house}. ev)</p>
-      <h2>Yıllık profeksiyon</h2><p>${prof.age} yaşındasınız: profeksiyon <b>${prof.house}. eve</b> (${A.SIGNS[prof.sign]}) ulaştı; yılın yöneticisi <b>${nm(prof.lord)}</b>. ${TX.PROFECT[prof.house]}</p>
+      <h2>Yıllık profeksiyon</h2><p>${age < 0 ? 'Doğum tarihi henüz gelmedi; ilk yıl gösteriliyor' : prof.age + ' yaşındasınız'}: profeksiyon <b>${prof.house}. eve</b> (${A.SIGNS[prof.sign]}) ulaştı; yılın yöneticisi <b>${nm(prof.lord)}</b>. ${TX.PROFECT[prof.house]}</p>
       <h2>Firdaria</h2>${cf ? `<p>Şu anki dönem: <b>${nm(cf.p)}</b>${csub ? ' / alt dönem <b>' + nm(csub.p) + '</b>' : ''} (${fmtShort(cf.start)} – ${fmtShort(cf.end)})</p>` : ''}<details><summary>Tüm firdaria dönemleri</summary><div class="list">${fird.map(f => `<div><b>${nm(f.p)}</b> ${fmtShort(f.start)} – ${fmtShort(f.end)}${f.subs.length ? `<br><span class="small muted">${f.subs.map(s => nm(s.p) + ' ' + fmtShort(s.start)).join(' · ')}</span>` : ''}</div>`).join('')}</div></details>
       ${zrBlock(c)}
       <h2>Ptolemaik açılar (Lilly’nin moiety orbları)</h2>${aspList(asps)}`;
@@ -487,7 +491,7 @@
     const src = A.chart({ jd: sr, lat: loc.lat, lon: loc.lon }, calcSettings()); src.calc = calcSettings();
     const lrc = A.chart({ jd: lrj, lat: loc.lat, lon: loc.lon }, calcSettings()); lrc.calc = calcSettings();
     const which = S.retWhich || 'sr', c = which === 'sr' ? src : lrc;
-    const pr = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Chiron'].map(b => ({ b, list: B.nextReturn(b, nat.get(b) ? nat.get(b).lon : 0, jd, null).slice(0, 3) })).filter(x => nat.get(x.b));
+    const pr = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Chiron'].map(b => ({ b, list: B.nextReturn(b, nat.get(b) ? nat.get(b).lon : 0, jd, calcSettings().zodiac === 'S' ? { sidereal: true } : null).slice(0, 3) })).filter(x => nat.get(x.b));
     return `<div class="row" style="margin-top:10px"><button class="chip ${which === 'sr' ? 'on' : ''}" data-ret="sr">Solar return</button><button class="chip ${which === 'lr' ? 'on' : ''}" data-ret="lr">Lunar return</button><button class="chip ${S.retLoc === 'here' ? '' : 'on'}" data-retloc="birth">Doğum yeri</button><button class="chip ${S.retLoc === 'here' ? 'on' : ''}" data-retloc="here">Bulunduğum yer (${esc(here.name)})</button></div>
       <div class="wheelbox">${wheel(c, { uid: 'r', aspects: aspectsOf(c).filter(a => a.asp.major) })}</div>
       <p class="small muted" style="text-align:center">${which === 'sr' ? 'Solar return' : 'Lunar return'}: ${fmtDate(c.jd)} · ${esc(loc.name || '')}</p>
@@ -508,7 +512,7 @@
     const st = ['Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'].flatMap(b => A.stations(b, j0 - 1, j1 - j0 + 1)).filter(s => s.jd >= j0 && s.jd < j1);
     const mn = new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' }).format(new Date(y, m - 1, 15));
     return `<div class="row" style="margin-top:12px;justify-content:space-between"><button class="btn ghost" data-cal="-1">‹ Önceki</button><h2 style="margin:0">${esc(mn)}</h2><button class="btn ghost" data-cal="1">Sonraki ›</button></div>
-      <h3>Ay evreleri ve tutulmalar</h3><div class="list">${lun.map(l => `<div><b>${l.type === 'new' ? 'Yeni Ay' : 'Dolunay'}${l.eclipse ? (l.type === 'new' ? ' — Güneş tutulması' : ' — Ay tutulması') : ''}</b> · ${fmtDate(l.jd, zone)} · ${fmtLon(l.lon)}${nat ? ` · ${esc(ap.name)} için ${A.houseOf(l.lon, nat.houses.cusps)}. ev (${TX.H[A.houseOf(l.lon, nat.houses.cusps)].t})` : ''}</div>`).join('')}</div>
+      <h3>Ay evreleri ve tutulmalar</h3><div class="list">${lun.map(l => `<div><b>${l.type === 'new' ? 'Yeni Ay' : 'Dolunay'}${l.eclipse ? (l.type === 'new' ? ' — Güneş tutulması' : ' — Ay tutulması') + ' (' + l.ecl + ')' : ''}</b> · ${fmtDate(l.jd, zone)} · ${fmtLon(l.lon)}${nat ? ` · ${esc(ap.name)} için ${A.houseOf(l.lon, nat.houses.cusps)}. ev (${TX.H[A.houseOf(l.lon, nat.houses.cusps)].t})` : ''}</div>`).join('')}</div>
       <h3>Retro ve direkt duruşlar</h3><div class="list">${st.map(s => `<div>${fmtDate(s.jd, zone)} · ${G(s.body)} ${esc(nm(s.body))} ${s.type === 'R' ? 'retro başlıyor' : 'direkt dönüyor'} · ${fmtLon(s.lon)}</div>`).join('') || '<div class="muted">Bu ay duruş yok.</div>'}</div>
       <h3>Ay’ın burç geçişleri ve boşlukta Ay</h3><div class="scroll"><table class="stack"><thead><tr><th>Boşluk başlar</th><th>Son açı</th><th>Ay burca girer</th></tr></thead><tbody>${ing.map(i => { const v = voc.find(x => Math.abs(x.end - i.jd) < 0.01); return `<tr><td>${v ? fmtDate(v.start, zone) : '—'}</td><td>${v ? esc(nm(v.lastPlanet)) + ' ' + esc(A.ASPECTS.find(a => a.a === v.lastAsp).n.toLowerCase()) : ''}</td><td>${fmtDate(i.jd, zone)} · ${A.SIGNS[i.sign]} ${sym(SG[i.sign])}</td></tr>`; }).join('')}</tbody></table></div><p class="small muted">Saatler ${esc(zone)} saat dilimine göredir. Boşlukta Ay: Ay’ın burcundan çıkmadan önceki son majör açısından burç değişimine kadar geçen süre (Güneş–Plüton).</p>`;
   }
@@ -543,10 +547,10 @@
         ${sel('minor', 'Minör açılar', [['false', 'Kapalı'], ['true', 'Açık']], st.minor)}
         ${sel('orbMult', 'Orb genişliği', [['0.75', 'Dar (×0,75)'], ['1', 'Standart'], ['1.25', 'Geniş (×1,25)']], st.orbMult)}
         <label for="here_city">Bulunduğum yer (An ekranı, gezegen saatleri, dönüşler)</label><div class="dd"><input id="here_city" value="${esc(st.here.name)}" autocomplete="off"><div class="ddlist" id="here_dd" hidden></div></div></div>`;
-    } else if (sub === 'yedek') h += `<div class="card"><p>Kişileriniz bu cihazda saklanır${'' }; claude.ai hesabınızla açtığınızda hesabınıza da yedeklenir. Başka bir cihaza taşımak için aşağıdaki metni kopyalayıp oradaki “İçe aktar” alanına yapıştırın.</p><textarea id="bk" rows="5">${esc(JSON.stringify({ people: S.people, settings: S.settings, txo: TXEDIT.load() }))}</textarea><div class="row" style="margin-top:8px"><button class="btn ghost" data-act="copybk">Kopyala</button><button class="btn" data-act="importbk">İçe aktar</button></div></div>`;
+    } else if (sub === 'yedek') h += `<div class="card"><p>Kişileriniz, notlarınız ve metin düzenlemeleriniz bu cihazda saklanır${typeof claude !== 'undefined' ? '; claude.ai hesabınızla açtığınızda hesabınıza da yedeklenir' : ''}. Telefonu değiştirmeden ya da tarayıcı verisini silmeden önce yedek dosyası indirin. Başka bir cihaza taşımak için dosyayı orada “Dosyadan yükle” ile açın ya da aşağıdaki metni kopyalayıp “İçe aktar” deyin.</p><textarea id="bk" rows="5">${esc(JSON.stringify({ people: S.people, settings: S.settings, txo: TXEDIT.load() }))}</textarea><div class="row" style="margin-top:8px"><button class="btn ghost" data-act="copybk">Kopyala</button><button class="btn" data-act="importbk">İçe aktar</button></div><div class="row" style="margin-top:8px"><button class="btn" data-act="dlbk">Yedek dosyası indir</button><label class="btn ghost" style="display:inline-flex;align-items:center;cursor:pointer">Dosyadan yükle<input type="file" id="bkfile" accept=".json,application/json,text/plain" hidden></label></div></div>`;
     else if (sub === 'metin') h += TXEDIT.view();
     else if (sub === 'test') { const r = accuracyTests(), ok = r.filter(x => x.ok).length; h += `<div class="card"><h3>Doğruluk testleri: ${ok}/${r.length} başarılı</h3><p class="small muted">Hesap motoru, yayımlanmış referans değerlerle bu cihazda canlı olarak karşılaştırılır.</p><div class="scroll"><table class="stack"><thead><tr><th>Test</th><th class="n">Hesaplanan</th><th class="n">Beklenen</th><th class="n">Fark</th><th>Sonuç</th></tr></thead><tbody>${r.map(x => `<tr><td>${esc(x.name)}</td><td class="n">${x.got.toFixed(4)}</td><td class="n">${x.exp.toFixed(4)}</td><td class="n">${x.unit === '°' ? (x.d * 3600).toFixed(1) + '″' : x.d.toFixed(2)}</td><td>${x.ok ? '✓ geçti' : '✗ kaldı'}</td></tr>`).join('')}</tbody></table></div><p class="small muted">Ek efemeris: ${SEPH_API.sets()} veri bloğu yüklü (1900–2100 temel; 1800–1900 ve 2100–2400 gerektiğinde yüklenir).</p></div>`; }
-    else h += `<div class="card"><h3>Hesap kaynakları</h3><p class="small">Gezegenler, Ay, asteroitler (1800–2400): Swiss Ephemeris, Astrodienst AG (NASA JPL DE441 tabanlı), sıkıştırılmış Chebyshev verisi doğrudan okunur. Bu aralık dışında Meeus, JPL Standish ve Schlyter analitik çözümleri kullanılır (±3′). Nütasyon, presesyon (IAU 1976), ışık zamanı ve yıllık sapınç uygulanır. Sabit yıldızlar: Swiss Ephemeris sefstars.txt. Ev sistemleri: Swiss Ephemeris belgelerindeki formüller. Saat dilimleri: IANA tz veritabanı (tarihsel yaz saati). Şehirler ve dünya haritası: Natural Earth (kamu malı). ΔT: Espenak–Meeus ve IERS ölçümleri.</p><h3>Yorumlar</h3><p class="small">Geleneksel kaynakların (Doroteus, Batlamyus, Valens, Lilly, Bonatti) ve çağdaş psikolojik astrolojinin ilkelerine dayanarak özgün biçimde yazılmıştır. Sabian sembol metinleri telifli olduğu için yalnızca Sabian derecesi gösterilir.</p></div>`;
+    else h += `<div class="card"><h3>Hesap kaynakları</h3><p class="small">Gezegenler, Ay, asteroitler (1800–2400): Swiss Ephemeris, Astrodienst AG (NASA JPL DE441 tabanlı), sıkıştırılmış Chebyshev verisi doğrudan okunur. Bu aralık dışında Meeus, JPL Standish ve Schlyter analitik çözümleri kullanılır (±3′). Nütasyon, presesyon (IAU 1976), ışık zamanı ve yıllık sapınç uygulanır; ΔT değerleri Swiss Ephemeris ile aynıdır. 1800–2400 arası 150 rastgele tarih ve yerde Swiss Ephemeris'in kendi aracı swetest ile karşılaştırıldı: gezegenler, Ay, asteroitler, düğümler, Lilith, sabit yıldızlar ve yedi ev sistemi 1–2 yay saniyesi içinde (2100 sonrası evlerde en çok 13″) aynıdır; tutulmalar ve türleri birebir eşleşir. Sabit yıldızlar: Swiss Ephemeris sefstars.txt. Ev sistemleri: Swiss Ephemeris belgelerindeki formüller. Saat dilimleri: IANA tz veritabanı (tarihsel yaz saati). Şehirler ve dünya haritası: Natural Earth (kamu malı). ΔT: Espenak–Meeus ve IERS ölçümleri.</p><h3>Yorumlar</h3><p class="small">Geleneksel kaynakların (Doroteus, Batlamyus, Valens, Lilly, Bonatti) ve çağdaş psikolojik astrolojinin ilkelerine dayanarak özgün biçimde yazılmıştır. Sabian sembol metinleri telifli olduğu için yalnızca Sabian derecesi gösterilir.</p></div>`;
     return h;
   }
 
@@ -660,13 +664,13 @@
     const el = (c, id) => c.get(id).sign % 4;
     out += pageWrap('Özet', ++n, `<p>İki harita arasında ${ia.length} majör açı var: ${soft} uyumlu, ${hard} zorlayıcı, ${con} kavuşum. ${soft > hard ? 'Uyumlu bağların ağırlığı, birlikteliğin doğal bir akış ve kolaylık taşıdığını gösterir.' : hard > soft ? 'Gerilimli bağların ağırlığı yoğun bir çekim ve karşılıklı büyüme getirir; iletişim ve sabır anahtardır.' : 'Uyum ile gerilim dengede; ilişki hem rahatlatıcı hem de geliştiricidir.'}</p><p>Ay’lar ${el(ca, 'Moon') === el(cb, 'Moon') ? 'aynı elementte: duygusal dilleriniz benzer.' : 'farklı elementlerde: birbirinizin duygusal ihtiyaçlarını öğrenmek zaman alır.'} Venüs–Mars bağları: ${ia.filter(x => (x.p.id === 'Venus' && x.q.id === 'Mars') || (x.p.id === 'Mars' && x.q.id === 'Venus')).map(x => x.asp.n.toLowerCase()).join(', ') || 'doğrudan majör açı yok'}.</p><h3>Anahtar temaslar</h3>${key.map(x => `<p><span class="${aspClass(x.asp.k)}">${G(x.p.id)} ${ASPG[x.asp.k]} ${G(x.q.id)}</span> ${esc(synText(x, a.name, b.name))}</p>`).join('') || '<p class="muted">Kişisel noktalar arasında majör temas yok.</p>'}`);
     out += pageWrap('Tüm karşılıklı açılar', ++n, ia.map(x => `<p><span class="${aspClass(x.asp.k)}">${G(x.p.id)} ${ASPG[x.asp.k]} ${G(x.q.id)}</span> ${esc(synText(x, a.name, b.name))}</p>`).join(''));
-    const ov = (c1, c2, n1, n2) => B.overlays(c1, c2).filter(o => CORE.includes(o.id)).map(o => `<p><b>${esc(n1)}’ın ${nm(o.id)}’i, ${esc(n2)}’ın ${o.house}. evinde:</b> ${esc(n1)}, ${esc(n2)}’ın ${TX.H[o.house].t} alanını ${P(o.id).k.split(',')[0]} temasıyla etkiler.</p>`).join('');
+    const ov = (c1, c2, n1, n2) => c2.unknownTime ? `<p class="muted">${esc(n2)} için doğum saati bilinmediğinden ev yerleşimleri hesaplanamaz.</p>` : B.overlays(c1, c2).filter(o => CORE.includes(o.id)).map(o => `<p><b>${esc(n1)}’ın ${nm(o.id)}’i, ${esc(n2)}’ın ${o.house}. evinde:</b> ${esc(n1)}, ${esc(n2)}’ın ${TX.H[o.house].t} alanını ${P(o.id).k.split(',')[0]} temasıyla etkiler.</p>`).join('');
     out += pageWrap('Ev yerleşimleri', ++n, ov(cb, ca, b.name, a.name) + ov(ca, cb, a.name, b.name));
     out += pageWrap('Kompozit harita', ++n, `<div class="wheelbox" style="max-width:440px">${wheel(k, { uid: 'kc' + (uidN++), points: pointsFor(k), aspects: aspectsOf(k).filter(x => x.asp.major) })}</div><p>İlişkinin kendisinin haritası: kompozit Güneş ${A.SIGNS[k.get('Sun').sign]}, ${k.get('Sun').house}. evde — ilişkinin amacı ${TX.H[k.get('Sun').house].t} alanında parlar. Kompozit Ay ${A.SIGNS[k.get('Moon').sign]}: birlikteyken duygusal ihtiyaçlarınız ${TX.S[k.get('Moon').sign].st} karşılanır. Kompozit Venüs ${k.get('Venus').house}. evde: sevgi en çok ${TX.H[k.get('Venus').house].t} alanında ifade bulur.</p>`);
     return out;
   }
   function srReport(p) {
-    const nat = chartOf(p), jd = targetJD(), sr = B.nextReturn('Sun', nat.get('Sun').lon, jd - 366, null).filter(j => j > jd - 366)[0];
+    const nat = chartOf(p), jd = targetJD(), sr = B.nextReturn('Sun', nat.get('Sun').lon, jd - 366, calcSettings().zodiac === 'S' ? { sidereal: true } : null).filter(j => j > jd - 366)[0];
     const loc = S.retLoc === 'here' ? S.settings.here : { lat: +p.lat, lon: +p.lon, name: p.place }, c = A.chart({ jd: sr, lat: loc.lat, lon: loc.lon }, calcSettings()); c.calc = calcSettings();
     let n = 1, out = cover(`${p.name} — Solar Return ${new Date(A.utcFromJD(sr)).getUTCFullYear()}`, `${fmtDate(sr)} · ${esc(loc.name || '')}`, wheel(c, { uid: 'srw' + (uidN++), aspects: aspectsOf(c).filter(a => a.asp.major) }));
     out += pageWrap('Özet', ++n, `<p>${esc(srText(c, nat))}</p>`);
@@ -682,7 +686,7 @@
     out += pageWrap('Yavaş gezegenler', ++n, timeline(big, nat));
     out += pageWrap('Mars transitleri (eylem zamanlaması)', ++n, timeline(hits.filter(h => h.tr === 'Mars'), nat));
     const lun = A.lunations(jd, 365).filter(l => l.eclipse);
-    out += pageWrap('Tutulmalar', ++n, lun.map(l => `<p><b>${l.type === 'new' ? 'Güneş tutulması' : 'Ay tutulması'}</b> ${fmtDate(l.jd)} · ${fmtLon(l.lon)} · ${A.houseOf(l.lon, nat.houses.cusps)}. ev: ${TX.H[A.houseOf(l.lon, nat.houses.cusps)].t} alanında bir kapanış ya da başlangıç.</p>`).join('') || '<p class="muted">Yok.</p>');
+    out += pageWrap('Tutulmalar', ++n, lun.map(l => `<p><b>${l.type === 'new' ? 'Güneş tutulması' : 'Ay tutulması'} (${l.ecl})</b> ${fmtDate(l.jd)} · ${fmtLon(l.lon)} · ${A.houseOf(l.lon, nat.houses.cusps)}. ev: ${TX.H[A.houseOf(l.lon, nat.houses.cusps)].t} alanında bir kapanış ya da başlangıç.</p>`).join('') || '<p class="muted">Yok.</p>');
     return out;
   }
   function showReport(kind) {
@@ -725,8 +729,16 @@
     add('Venüs boylamı — Meeus örnek 33.a (1992-12-20)', A.rawLon('Venus', 2448976.5 - dt).lon, 313.08102, 0.003, '°');
     const ing = (b, y, mo, d, h, mi, t) => add(`${nm(b)} ${t}° geçişi ${d}.${mo}.${y} ${pad(h)}:${pad(mi)} UT`, A.wrap180(A.rawLon(b, A.jdFromUTC(Date.UTC(y, mo - 1, d, h, mi))).lon - t), 0, 0.05, '°');
     ing('Sun', 2025, 3, 20, 9, 1, 0); ing('Jupiter', 2025, 6, 9, 21, 3, 90); ing('Uranus', 2025, 7, 7, 7, 45, 60); ing('Pluto', 2023, 3, 23, 12, 13, 300);
-    const st = B.fixedStars(2451545, STARS), g = n => st.find(s => s.n === n).lon;
-    add('Regulus (J2000) 29°50′ Aslan', g('Regulus'), 149.833, 0.02, '°'); add('Spika (J2000) 23°50′ Terazi', g('Spica'), 203.833, 0.02, '°');
+    // Swiss Ephemeris (swetest 2.10) referans değerleri
+    const st = B.fixedStars(2451544.5, STARS), g = n => st.find(s => s.n === n).lon;
+    add('Regulus 1.1.2000 0h UT — Swiss Ephemeris', g('Regulus'), 149.8289831, 0.0005, '°'); add('Spika 1.1.2000 0h UT — Swiss Ephemeris', g('Spica'), 203.8360799, 0.0005, '°');
+    add('Ortalama Lilith 1.1.2000 12h UT — Swiss Ephemeris', A.bodyPos('Lilith', 2451545, {}).lon, 263.4643327, 0.0005, '°');
+    add('Gerçek Ay Düğümü 1.1.2000 12h UT — Swiss Ephemeris', A.bodyPos('NNode', 2451545, {}).lon, 123.9540228, 0.0005, '°');
+    add('Lahiri sidereal Güneş 1.1.2000 12h UT — Swiss Ephemeris', A.bodyPos('Sun', 2451545, { sidereal: true }).lon, 256.5156960, 0.0005, '°');
+    const jI = A.jdFromUTC(Date.UTC(1990, 6, 15, 9, 30)), hI = A.houses(jI, 41.0082, 28.9784, 'P');
+    add('Placidus Yükselen, İstanbul 15.7.1990 09:30 UT — Swiss Ephemeris', hI.asc, 191.4342455, 0.0005, '°');
+    add('Placidus 11. ev, İstanbul 15.7.1990 09:30 UT — Swiss Ephemeris', hI.cusps[11], 136.7564854, 0.0005, '°');
+    add('Ay, 8.4.2024 18:17:20 UT tam Güneş tutulması — Swiss Ephemeris', A.rawLon('Moon', A.jdFromUTC(Date.UTC(2024, 3, 8, 18, 17, 20))).lon, 19.3637249, 0.0005, '°');
     const h0 = A.houses(2451545, 0.0001, 0, 'P'), r0 = A.houses(2451545, 0.0001, 0, 'R');
     add('Placidus = Regiomontanus (ekvatorda) 11. ev', h0.cusps[11], r0.cusps[11], 0.001, '°');
     add('Türkiye saat dilimi 15.07.1990 (yaz saati +3)', A.localToUTC(1990, 7, 15, 12, 0, 'Europe/Istanbul').offsetMin / 60, 3, 0, 'sa');
@@ -783,7 +795,10 @@
     else if (act === 'dlreport') downloadReport();
     else if (act === 'copyreport') { const txt = $('#rep').innerText; navigator.clipboard.writeText(txt).then(() => toast('Kopyalandı'), () => toast('Kopyalanamadı')); }
     else if (act === 'copybk') navigator.clipboard.writeText($('#bk').value).then(() => toast('Kopyalandı'), () => toast('Kopyalanamadı'));
-    else if (act === 'importbk') { try { const v = JSON.parse($('#bk').value); if (Array.isArray(v.people)) { const ids = new Set(S.people.map(p => p.id)); for (const p of v.people) if (!ids.has(p.id)) S.people.push(p); if (v.settings) S.settings = Object.assign({}, S.settings, v.settings); if (v.txo) TXEDIT.importAll(v.txo); save(); toast('İçe aktarıldı'); render(); } } catch (e) { toast('Geçersiz yedek metni'); } }
+    else if (act === 'dlbk') { const txt = $('#bk').value, fn = 'AstroMidas-yedek-' + new Date().toISOString().slice(0, 10) + '.json';
+      (async () => { try { const dl = await claude.use('downloads'); if (dl) { await dl.save({ filename: fn, data: new Blob([txt], { type: 'application/json' }) }); toast('Yedek indirildi'); return; } } catch (e) { }
+        try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' })); a.download = fn; document.body.appendChild(a); a.click(); a.remove(); toast('Yedek indirildi'); } catch (e) { toast('İndirilemedi; metni kopyalayın'); } })(); }
+    else if (act === 'importbk') { try { const v = JSON.parse($('#bk').value); if (Array.isArray(v.people)) { for (const p of v.people) { const ex = S.people.find(x => x.id === p.id); if (!ex) S.people.push(p); else { const seen = new Set((ex.sessions || []).map(x => x.date + '|' + x.topic + '|' + x.note)); for (const x of p.sessions || []) if (!seen.has(x.date + '|' + x.topic + '|' + x.note)) (ex.sessions = ex.sessions || []).push(x); if (!ex.notes && p.notes) ex.notes = p.notes; } } if (v.settings) S.settings = Object.assign({}, S.settings, v.settings); if (v.txo) TXEDIT.importAll(v.txo); save(); toast('İçe aktarıldı'); render(); } } catch (e) { toast('Geçersiz yedek metni'); } }
     else if (act === 'addevent') { const p = activeP(), d = $('#ev_d').value; if (!d) { toast('Tarih seçin'); return; } (p.events = p.events || []).push({ date: d, kind: $('#ev_k').value, label: $('#ev_l').value || 'olay' }); save(); render(); }
     else if (act === 'rectify') {
       const p = activeP(); if (!(p.events || []).length) { toast('Önce olay ekleyin'); return; }
@@ -800,6 +815,7 @@
     else if (t.id === 'cyc_d') { const [d, tm] = t.value.split('T'), [y, m, dd] = d.split('-').map(Number), [h, mi] = (tm || '12:00').split(':').map(Number); S.cycJD = A.jdFromUTC(A.localToUTC(y, m, dd, h, mi, DEVICE_TZ).ms); render(); }
     else if (t.id === 'hr_d') { S.hourDate = t.value; render(); }
     else if (t.dataset.varga) { S.varga = +t.value; render(); }
+    else if (t.id === 'bkfile' && t.files && t.files[0]) { t.files[0].text().then(txt => { $('#bk').value = txt; document.querySelector('[data-act="importbk"]').click(); }); }
     if (['f_date', 'f_time', 'f_zone', 'f_off'].includes(t.id)) formInfo();
   });
   app.addEventListener('input', e => {

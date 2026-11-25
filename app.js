@@ -47,7 +47,7 @@ var AM = (function () {
   const nm = id => P(id).n, gl = id => (P(id).g || id) + (String(P(id).g || '').length === 1 ? '︎' : '');
   const pad = n => String(n).padStart(2, '0');
   function dms(x, sec) { x = Math.abs(x); let d = Math.floor(x), mf = (x - d) * 60, m = Math.floor(mf), s = Math.round((mf - m) * 60); if (s === 60) { s = 0; m++; } if (m === 60) { m = 0; d++; } return sec ? `${d}°${pad(m)}′${pad(s)}″` : `${d}°${pad(m)}′`; }
-  function fmtLon(lon, sec) { lon = A.norm(lon); let s = Math.floor(lon / 30), d = lon - s * 30; if (d >= 29.99999 && !sec) { } return `${dms(d, sec)} <span class="sym">${SG[s]}</span>`; }
+  function fmtLon(lon, sec) { lon = A.norm(lon); if (sec) lon = A.norm(Math.round(lon * 3600) / 3600); let s = Math.floor(lon / 30) % 12, d = lon - Math.floor(lon / 30) * 30; return `${dms(d, sec)} <span class="sym">${SG[s]}</span>`; }
   const fmtLonTxt = lon => { const s = A.signOf(lon); return `${dms(lon - s * 30)} ${A.SIGNS[s]}`; };
   function fmtDate(jd, zone, withTime = true) {
     const d = new Date(A.utcFromJD(jd));
@@ -62,14 +62,14 @@ var AM = (function () {
 
   /* ---------- Kişi → harita ---------- */
   function inputOf(p) {
-    let ms, off;
+    let ms, off, gap = false, ambiguous = false;
     if (p.offsetOverride != null && p.offsetOverride !== '') { off = +p.offsetOverride; ms = Date.UTC(p.y, p.mo - 1, p.d, p.h, p.mi) - off * 60000; }
-    else { const r = A.localToUTC(p.y, p.mo, p.d, p.h, p.mi, p.zone || 'UTC'); ms = r.ms; off = r.offsetMin; }
-    return { jd: A.jdFromUTC(ms), lat: +p.lat, lon: +p.lon, ms, offsetMin: off, zone: p.zone };
+    else { const r = A.localToUTC(p.y, p.mo, p.d, p.h, p.mi, p.zone || 'UTC'); ms = r.ms; off = r.offsetMin; gap = r.gap; ambiguous = r.ambiguous; }
+    return { jd: A.jdFromUTC(ms), lat: +p.lat, lon: +p.lon, ms, offsetMin: off, zone: p.zone, gap, ambiguous };
   }
   const cache = new Map();
   function chartOf(p, over) {
-    const s = calcSettings(over), key = JSON.stringify([p.id, p.y, p.mo, p.d, p.h, p.mi, p.lat, p.lon, p.zone, p.offsetOverride, s]);
+    const s = calcSettings(over), key = JSON.stringify([p.id, p.y, p.mo, p.d, p.h, p.mi, p.lat, p.lon, p.zone, p.offsetOverride, p.timeAcc, s]);
     if (cache.has(key)) return cache.get(key);
     const c = A.chart(inputOf(p), s); c.person = p; c.calc = s;
     if (p.timeAcc === 'bilinmiyor') { // güneş haritası: Güneş derecesi Yükselen, eşit evler

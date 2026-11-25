@@ -38,10 +38,13 @@
     const pj = progressedJD(natal.jd, targetJD), o = { sidereal: settings.zodiac === 'S', meanNode: settings.node === 'mean' };
     const pc = A.chart({ jd: pj, lat: natal.input.lat, lon: natal.input.lon }, settings);
     const arc = norm(pc.get('Sun').lon - natal.get('Sun').lon);
-    const mc = norm(natal.houses.mc + arc), eps = natal.houses.eps;
+    // MC güneş arkıyla ilerletilir (Solar Fire varsayılanı); RAMC dönüşümü tropikal boylamla yapılır
+    const ayN = o.sidereal ? A.ayanamsa(natal.jd) : 0, mc = norm(natal.houses.mc + ayN + arc), eps = natal.houses.eps;
     const ramc = norm(atan2(sin(mc) * cos(eps), cos(mc)));
-    const h = A.housesRAMC(ramc, natal.input.lat, eps, settings.hsys || 'P');
-    for (const p of pc.points) if (['Asc', 'MC', 'Vertex'].includes(p.id)) { p.lon = p.id === 'Asc' ? h.asc : p.id === 'MC' ? h.mc : h.vertex; p.sign = A.signOf(p.lon); p.deg = p.lon - p.sign * 30; }
+    const h = A.siderealize(A.housesRAMC(ramc, natal.input.lat, eps, settings.hsys || 'P'), natal.jd, o);
+    const pSun = pc.get('Sun').lon, pMoon = pc.get('Moon').lon, day = norm(pSun - h.asc) > 180;
+    const lot = (a, b) => norm(h.asc + a - b);
+    for (const p of pc.points) if (['Asc', 'MC', 'Vertex', 'Fortune', 'Spirit'].includes(p.id)) { p.lon = p.id === 'Asc' ? h.asc : p.id === 'MC' ? h.mc : p.id === 'Vertex' ? h.vertex : p.id === 'Fortune' ? (day ? lot(pMoon, pSun) : lot(pSun, pMoon)) : (day ? lot(pSun, pMoon) : lot(pMoon, pSun)); p.sign = A.signOf(p.lon); p.deg = p.lon - p.sign * 30; }
     for (const p of pc.points) p.house = A.houseOf(p.lon, natal.houses.cusps);
     pc.progHouses = h; pc.arc = arc; pc.pjd = pj; pc.o = o;
     return pc;
@@ -113,9 +116,10 @@
   function composite(c1, c2, settings) {
     const ids = c1.points.map(p => p.id), pts = [];
     for (const id of ids) { const p = c1.get(id), q = c2.get(id); if (!q) continue; const l = mid(p.lon, q.lon); pts.push({ id, lon: l, speed: ((p.speed || 0) + (q.speed || 0)) / 2, dec: null }); }
+    const sid = settings.zodiac === 'S', jm = (c1.jd + c2.jd) / 2, ay = sid ? A.ayanamsa(jm) : 0;
     const mc = mid(c1.houses.mc, c2.houses.mc), eps = (c1.houses.eps + c2.houses.eps) / 2, lat = (c1.input.lat + c2.input.lat) / 2;
-    const ramc = norm(atan2(sin(mc) * cos(eps), cos(mc)));
-    const h = A.housesRAMC(ramc, lat, eps, settings.hsys === 'P' && Math.abs(lat) > 66 ? 'O' : settings.hsys || 'P');
+    const mcT = norm(mc + ay), ramc = norm(atan2(sin(mcT) * cos(eps), cos(mcT)));
+    const h = A.siderealize(A.housesRAMC(ramc, lat, eps, settings.hsys === 'P' && Math.abs(lat) > 66 ? 'O' : settings.hsys || 'P'), jm, { sidereal: sid });
     for (const p of pts) { if (p.id === 'Asc') p.lon = h.asc; if (p.id === 'MC') p.lon = h.mc; p.sign = A.signOf(p.lon); p.deg = p.lon - p.sign * 30; p.house = A.houseOf(p.lon, h.cusps); }
     return { houses: h, points: pts, get: id => pts.find(p => p.id === id), input: { lat, lon: 0 } };
   }
@@ -150,11 +154,14 @@
   /* ---------- Sabit yıldızlar ---------- */
   function fixedStars(jdUT, stars) {
     const jdT = A.jdTT(jdUT), T = (jdT - 2451545) / 36525, nu = A.nutation(T), yrs = (jdT - 2451545) / 365.25;
+    const sun = A.rawLon('Sun', jdUT).lon, K = 20.49552 / 3600, ecc = 0.016708634 - 0.000042037 * T, pi = 102.93735 + 1.71946 * T; // yıllık aberasyon (Meeus 23.2)
     return stars.map(s => {
       const dec = s.dec + s.pd / 3.6e6 * yrs, ra = s.ra + s.pa / 3.6e6 * yrs / Math.max(0.01, cos(s.dec));
       const v = [cos(dec) * cos(ra), cos(dec) * sin(ra), sin(dec)];
       const e = A.eqToEcl(A.precessJ2000(v, T), nu.eps0);
-      return { ...s, lon: norm(atan2(e[1], e[0]) + nu.dpsi), lat: asin(e[2]) };
+      let lon = atan2(e[1], e[0]), lat = asin(e[2]);
+      const dl = (-K * cos(sun - lon) + ecc * K * cos(pi - lon)) / cos(lat), db = -K * sin(lat) * (sin(sun - lon) - ecc * sin(pi - lon));
+      return { ...s, lon: norm(lon + dl + nu.dpsi), lat: lat + db };
     });
   }
   function starContacts(c, starPos, orb) {
@@ -256,7 +263,7 @@
 
   /* ---------- Klasik: profeksiyon, firdaria ---------- */
   function profection(c, ageYears) {
-    const n = Math.floor(ageYears), house = n % 12 + 1, sign = (A.signOf(c.houses.asc) + n) % 12;
+    const n = Math.max(0, Math.floor(ageYears)), house = n % 12 + 1, sign = (A.signOf(c.houses.asc) + n) % 12;
     return { age: n, house, sign, lord: A.RULER[sign] };
   }
   const FIRD_D = [['Sun', 10], ['Venus', 8], ['Mercury', 13], ['Moon', 9], ['Saturn', 11], ['Jupiter', 12], ['Mars', 7], ['NNode', 3], ['SNode', 2]];
@@ -272,7 +279,8 @@
   }
   function almuten(c) { // Asc, MC, Güneş, Ay, Şans noktası ve doğum öncesi kavuşum/karşıtlık için esansiyel puan toplamı
     const score = {}; for (const p of CHALD) score[p] = 0;
-    const pts = ['Asc', 'MC', 'Sun', 'Moon', 'Fortune'].map(id => c.get(id).lon);
+    const syz = A.lunations(c.jd - 16, 16).filter(l => l.jd <= c.jd).pop();
+    const pts = ['Asc', 'MC', 'Sun', 'Moon', 'Fortune'].map(id => c.get(id).lon).concat(syz ? [norm(syz.lon - (c.settings && c.settings.zodiac === 'S' ? A.ayanamsa(c.jd) : 0))] : []);
     for (const l of pts) for (const p of CHALD) { const d = A.dignity(p, l, c.isDay).list; if (d.includes('Yönetici')) score[p] += 5; if (d.includes('Yücelim')) score[p] += 4; if (d.includes('Üçlük')) score[p] += 3; if (d.includes('Sınır')) score[p] += 2; if (d.includes('Yüz')) score[p] += 1; }
     // gezegenin dignity listesi "kendisi için" hesaplanır; burada ilgili noktanın yöneticilerini sayarız:
     for (const p of CHALD) score[p] = 0;
@@ -303,12 +311,14 @@
     return out;
   }
   const VEX = { Sun: [0, 10], Moon: [1, 3], Mars: [9, 28], Mercury: [5, 15], Jupiter: [3, 5], Venus: [11, 27], Saturn: [6, 20] };
-  const MOOLA = { Sun: [4, 0, 20], Moon: [1, 4, 30], Mars: [0, 0, 12], Mercury: [5, 16, 20], Jupiter: [8, 0, 10], Venus: [6, 0, 15], Saturn: [10, 0, 20] };
+  const MOOLA = { Sun: [4, 0, 20], Moon: [1, 3, 30], Mars: [0, 0, 12], Mercury: [5, 15, 20], Jupiter: [8, 0, 10], Venus: [6, 0, 15], Saturn: [10, 0, 20] };
   const OWN = { Sun: [4], Moon: [3], Mars: [0, 7], Mercury: [2, 5], Jupiter: [8, 11], Venus: [1, 6], Saturn: [9, 10] };
   const FRIEND = { Sun: [['Moon', 'Mars', 'Jupiter'], ['Venus', 'Saturn']], Moon: [['Sun', 'Mercury'], []], Mars: [['Sun', 'Moon', 'Jupiter'], ['Mercury']], Mercury: [['Sun', 'Venus'], ['Moon']], Jupiter: [['Sun', 'Moon', 'Mars'], ['Mercury', 'Venus']], Venus: [['Mercury', 'Saturn'], ['Sun', 'Moon']], Saturn: [['Mercury', 'Venus'], ['Sun', 'Moon', 'Mars']] };
   function vedicDignity(p, sidLon) {
     if (!VEX[p]) return '';
     const s = A.signOf(sidLon), d = sidLon - s * 30;
+    if (p === 'Mercury' && s === 5) return d < 15 ? (d >= 14 ? 'Tam üçça' : 'Üçça (yücelim)') : d < 20 ? 'Mulatrikona' : 'Sva (kendi burcu)'; // BPHS: 0–15 üçça, 15–20 mulatrikona, 20–30 kendi
+    if (p === 'Moon' && s === 1) return d < 3 ? (d >= 2 ? 'Tam üçça' : 'Üçça (yücelim)') : 'Mulatrikona'; // BPHS: 0–3 üçça, 3–30 mulatrikona
     if (VEX[p][0] === s) return Math.abs(d - VEX[p][1]) < 1 ? 'Tam üçça' : 'Üçça (yücelim)';
     if ((VEX[p][0] + 6) % 12 === s) return 'Nica (düşüş)';
     const m = MOOLA[p]; if (m[0] === s && d >= m[1] && d < m[2]) return 'Mulatrikona';

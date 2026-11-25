@@ -31,7 +31,7 @@
   /* ---------- Primer direksiyonlar: açılara (MC ve Yükselen), Naibod anahtarı, zodyakta ---------- */
   function primaryToAngles(c, maxAge) {
     maxAge = maxAge || 90;
-    const eps = c.houses.eps, ramc = c.houses.ramc, lat = c.input.lat, NAIBOD = 0.98564733;
+    const eps = c.houses.eps, ramc = c.houses.ramc, lat = c.input.lat, NAIBOD = 0.98564733, ayn = c.settings && c.settings.zodiac === 'S' ? A.ayanamsa(c.jd) : 0;
     const raDec = l => [norm(atan2(sin(l) * cos(eps), cos(l))), asin(sin(eps) * sin(l))];
     const ids = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto', 'NNode'];
     const asps = [[0, 'kavuşum'], [60, 'altmışlık'], [90, 'kare'], [120, 'üçgen'], [180, 'karşıt'], [-60, 'altmışlık'], [-90, 'kare'], [-120, 'üçgen']];
@@ -39,7 +39,7 @@
     for (const id of ids) {
       const p = c.get(id); if (!p) continue;
       for (const [a, an] of asps) {
-        const l = norm(p.lon + a), [ra, dec] = raDec(l);
+        const l = norm(p.lon + ayn + a), [ra, dec] = raDec(l);
         const arcMC = norm(ra - ramc), ad = Math.abs(tan(lat) * tan(dec)) < 1 ? asin(tan(lat) * tan(dec)) : null;
         if (arcMC / NAIBOD <= maxAge && arcMC > 0.05) out.push({ to: 'MC', pr: id, asp: an, arc: arcMC, age: arcMC / NAIBOD });
         if (ad != null) { const oa = norm(ra - ad), arcA = norm(oa - oaAsc); if (arcA / NAIBOD <= maxAge && arcA > 0.05) out.push({ to: 'Asc', pr: id, asp: an, arc: arcA, age: arcA / NAIBOD }); }
@@ -116,6 +116,8 @@
     const TRN = { Sun: "Güneş", Moon: "Ay", Mercury: "Merkür", Venus: "Venüs", Mars: "Mars", Jupiter: "Jüpiter", Saturn: "Satürn" };
     // Raja yoga: kendra lordu ile trikona lordu aynı burçta
     const rj = []; for (const k of [1, 4, 7, 10]) for (const t of [5, 9]) { const a = lord(k), b = lord(t); if (a !== b && R[a] && R[b] && R[a].sign === R[b].sign) rj.push(`${k}. ev lordu ${TRN[a] || a} ile ${t}. ev lordu ${TRN[b] || b}`); }
+    const yk = ['Mars', 'Venus', 'Saturn'].filter(p => { const hs = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].filter(h => lord(h) === p); return hs.some(h => [4, 7, 10].includes(h)) && hs.some(h => [5, 9].includes(h)); });
+    for (const p of yk) add('Yogakaraka: ' + TRN[p], `${TRN[p]} hem bir kendra hem bir trikona evini yönetiyor; bu lagna için en hayırlı gezegendir, dönemleri yükseliş getirir.`, true);
     add('Raja yoga', 'Kendra ve trikona lordları birleşiyor (' + rj.join('; ') + '): güç, statü ve başarı.', rj.length > 0);
     const dh = []; for (const k of [2, 11]) for (const t of [5, 9]) { const a = lord(k), b = lord(t); if (a !== b && R[a] && R[b] && R[a].sign === R[b].sign) dh.push(`${k}. ve ${t}. ev lordları`); }
     add('Dhana yoga', 'Servet evlerinin lordları birleşiyor (' + dh.join('; ') + '): maddi bolluk potansiyeli.', dh.length > 0);
