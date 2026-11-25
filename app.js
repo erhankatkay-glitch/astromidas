@@ -23,12 +23,13 @@ var AM = (function () {
         const ids = new Set(S.people.map(p => p.id)); let added = 0;
         for (const p of v.people) if (!ids.has(p.id)) { S.people.push(p); added++; }
         if (v.settings && !store.get('settings', null)) S.settings = Object.assign({}, DEF, v.settings);
-        if (added) { store.set("people", S.people); window.render && window.render(); }
+        if (v.daily && window.DAILY) DAILY.importData(v.daily);
+        if (added || v.daily) { store.set("people", S.people); window.render && window.render(); }
       }
     } catch (e) { DB = null; }
   })();
   let dbT = null;
-  function dbSave() { if (!DB) return; clearTimeout(dbT); dbT = setTimeout(() => { try { DB.doc('data/users/' + UID + '/store/main').set({ people: S.people, settings: S.settings }); } catch (e) { } }, 1500); }
+  function dbSave() { if (!DB) return; clearTimeout(dbT); dbT = setTimeout(() => { try { DB.doc('data/users/' + UID + '/store/main').set({ people: S.people, settings: S.settings, daily: window.DAILY ? DAILY.exportData() : null }); } catch (e) { } }, 1500); }
 
   function toast(t) { const el = $('#toast'); el.textContent = t; el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2200); }
 

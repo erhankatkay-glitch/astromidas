@@ -63,7 +63,8 @@
     const stations = PL.filter(p => p !== 'Sun').flatMap(p => A.stations(p, j0 - 1, 2)).filter(s => s.jd >= j0 && s.jd < j1);
     const pIng = []; for (const p of PL) { const a0 = A.signOf(L(p, j0)), a1 = A.signOf(L(p, j1)); if (a0 !== a1) pIng.push({ p, s: a1 }); }
     const pos = {}; for (const p of ['Sun', 'Moon', ...PL.slice(1)]) pos[p] = L(p, jRef);
-    const r = { ds, j0, j1, jRef, isToday, moon, ms, ph, phi, illum, moonAsp, plAsp: plAsp.slice(0, 6), voc, ing, retro, stations, pIng, pos, s: seed('AstroMidas|' + ds) };
+    const lunAll = A.lunations(j0 - 1, 32), lun = lunAll.find(l => l.jd >= j0 && l.jd < j1) || null, nextLun = lunAll.find(l => l.jd >= j1) || null;
+    const r = { lun, nextLun, ds, j0, j1, jRef, isToday, moon, ms, ph, phi, illum, moonAsp, plAsp: plAsp.slice(0, 6), voc, ing, retro, stations, pIng, pos, s: seed('AstroMidas|' + ds) };
     if (cacheD.size > 20) cacheD.clear(); cacheD.set(ds, r);
     return r;
   }
@@ -155,18 +156,22 @@
 
   /* ---------- Görünüm ---------- */
   function sec(icon, title, body) { return `<section class="card dsec"><h3><span class="dic">${icon}</span>${title}</h3>${body}</section>`; }
-  function view() {
+  function navBar(ds, r) {
+    const dLabel = new Intl.DateTimeFormat('tr-TR', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(ds + 'T12:00:00Z'));
+    return `<div class="dnav"><button class="chip" data-dday="-1" aria-label="Önceki gün">‹</button><div class="dtitle"><b>${esc(dLabel)}</b><small>${r.isToday ? 'Bugün' : '<button class="linkbtn" data-dday="0">Bugüne dön</button>'}</small></div><button class="chip" data-dday="1" aria-label="Sonraki gün">›</button></div>`;
+  }
+  function viewBugun() {
     const ds = S.dayDate || todayStr(), r = compute(ds), c = content(r), DY = D();
     const ap = AM.activeP ? AM.activeP() : null;
     const mySign = ap ? A.signOf(AM.chartOf(ap, { zodiac: 'T', system: 'modern' }).get('Sun').lon) : null;
     const sel = S.daySign != null ? S.daySign : (mySign != null ? mySign : 0);
     const dLabel = new Intl.DateTimeFormat('tr-TR', { timeZone: 'UTC', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(ds + 'T12:00:00Z'));
-    let h = `<div class="dnav"><button class="chip" data-dday="-1" aria-label="Önceki gün">‹</button><div class="dtitle"><b>${esc(dLabel)}</b><small>${r.isToday ? 'Bugün' : '<button class="linkbtn" data-dday="0">Bugüne dön</button>'}</small></div><button class="chip" data-dday="1" aria-label="Sonraki gün">›</button></div>`;
+    let h = navBar(ds, r);
     h += `<div class="row" style="justify-content:center;margin:6px 0 4px"><input type="date" id="d_pick" value="${ds}" style="max-width:200px"><button class="btn ghost" data-dact="copy">Paylaşmak için kopyala</button></div>`;
     // 1 mesaj
     h += sec('✦', 'Günün kozmik mesajı', `<p class="dquote">${esc(c.msg)}</p><p class="small muted">${esc(c.phaseMsg)}</p>`);
     // 2 manifest
-    h += sec('☾', 'Günlük manifest', `<p class="dmani">“${esc(c.mani)}”</p><p class="small muted">Sabah kalkınca üç kez, yavaşça ve sesli tekrar et.</p>`);
+    h += sec('☾', 'Günlük manifest', `<p class="dmani">“${esc(c.mani)}”</p><div class="row" style="justify-content:space-between;align-items:center"><p class="small muted" style="margin:0">Sabah kalkınca üç kez, yavaşça ve sesli tekrar et.</p>${favBtn(c.mani, 'Günün manifesti')}</div>`);
     // 3 astrolojik hava
     const F = DY.FOCUS[r.ms];
     let wx = `<p><b>Ay ${LOC[r.ms]} ${sym(SG[r.ms])}</b> · ${PHN[r.phi]} (%${r.illum} aydınlık). Gökyüzünün tonu ${TONE[r.ms]}.</p>`;
@@ -185,11 +190,13 @@
     h += sec('?', 'Günün farkındalık sorusu', `<p class="dquote">${esc(c.q)}</p><p class="small muted">Cevabı düşünmeden, aklına ilk geleni bir yere yaz.</p>`);
     // 6 ritüel
     h += sec('❋', 'Günün küçük ritüeli', `<p><b>${esc(c.rit[0])}</b> <span class="tag">${esc(c.rit[1])}</span></p><p>${esc(c.rit[2])}</p>`);
+    // 7 Ay ritüeli
+    h += sec('◐', r.lun ? (r.lun.type === 'new' ? 'Yeni Ay ritüeli' : 'Dolunay ritüeli') : 'Sıradaki Ay ritüeli', lunarRitual(r));
     // burçlar
     h += `<h2 class="dh2">Burçlara özel günlük yorum</h2><div class="dsigns">${SIGNS.map((n, i) => `<button class="chip ${i === sel ? 'on' : ''}" data-dsign="${i}">${sym(SG[i])} ${n}${i === mySign ? ' •' : ''}</button>`).join('')}</div>`;
     const R = signReading(r, sel);
     h += `<section class="card dsec"><h3><span class="dic">${sym(SG[sel])}</span>${SIGNS[sel]} ${mySign === sel && ap ? '<span class="small muted">(' + esc(ap.name) + ' · Güneş burcu)</span>' : ''}</h3><p class="small muted">Ay bugün ${SIGNS[sel]} için ${R.house}. evde (güneş burcu evleri).</p>
-      <p>❤️ <b>Aşk ve ilişkiler:</b> ${esc(R.love)}</p><p>💰 <b>Para ve kariyer:</b> ${esc(R.money)}</p><p>🧠 <b>Ruh hali ve enerji:</b> ${esc(R.mood)}</p><p>⚠️ <b>Dikkat:</b> ${esc(R.care)}</p><p>✨ <b>Günün fırsatı:</b> ${esc(R.opp)}</p><p>🌙 <b>${SIGNS[sel]} manifesti:</b> “${esc(R.mani)}”</p></section>`;
+      <p>❤️ <b>Aşk ve ilişkiler:</b> ${esc(R.love)}</p><p>💰 <b>Para ve kariyer:</b> ${esc(R.money)}</p><p>🧠 <b>Ruh hali ve enerji:</b> ${esc(R.mood)}</p><p>⚠️ <b>Dikkat:</b> ${esc(R.care)}</p><p>✨ <b>Günün fırsatı:</b> ${esc(R.opp)}</p><div class="row" style="justify-content:space-between;align-items:center"><p style="margin:0">🌙 <b>${SIGNS[sel]} manifesti:</b> “${esc(R.mani)}”</p>${favBtn(R.mani, SIGNS[sel] + ' manifesti')}</div></section>`;
     h += `<p class="small muted" style="text-align:center">Saatler ${esc(tz())} saat dilimine göredir. İçerik, o günün gerçek gökyüzü hesabından uygulama içinde üretilir; burç yorumları Güneş burcuna göre genel yorumlardır, kişisel harita yerine geçmez.</p>`;
     return h;
   }
@@ -206,6 +213,183 @@
     for (let s = 0; s < 12; s++) { const R = signReading(r, s); t += `\n${SIGNS[s]}\n❤️ Aşk: ${R.love}\n💰 Para ve kariyer: ${R.money}\n🧠 Ruh hali: ${R.mood}\n⚠️ Dikkat: ${R.care}\n✨ Fırsat: ${R.opp}\n🌙 Manifest: ${R.mani}\n`; }
     return t;
   }
+  /* ---------- Kalıcı kişisel veriler (bu cihazda; yedekte ve hesapta saklanır) ---------- */
+  const ST = AM.store;
+  const DATA = () => ({ manifav: ST.get('manifav', []), niyet: ST.get('niyet', {}), mood: ST.get('mood', {}), seri: ST.get('seri', null), bildirim: ST.get('bildirim', { saat: '08:00' }) });
+  function exportData() { return DATA(); }
+  function importData(v) {
+    if (!v) return; const cur = DATA();
+    if (Array.isArray(v.manifav)) { const seen = new Set(cur.manifav.map(x => x.t)); ST.set('manifav', cur.manifav.concat(v.manifav.filter(x => !seen.has(x.t)))); }
+    if (v.niyet) ST.set('niyet', Object.assign({}, v.niyet, cur.niyet));
+    if (v.mood) ST.set('mood', Object.assign({}, v.mood, cur.mood));
+    if (v.seri && !cur.seri) ST.set('seri', v.seri);
+    if (v.bildirim) ST.set('bildirim', Object.assign({}, v.bildirim, cur.bildirim));
+  }
+  const persist = () => { try { AM.save(); } catch (e) { } };
+  function favBtn(t, src) { const on = ST.get('manifav', []).some(x => x.t === t); return `<button class="chip ${on ? 'on' : ''}" data-dfav="${esc(t)}" data-dsrc="${esc(src)}" aria-pressed="${on}" title="Favorilere ekle">${on ? '♥ Kaydedildi' : '♡ Kaydet'}</button>`; }
+
+  /* ---------- Ay ritüelleri ---------- */
+  function lunarRitual(r) {
+    const RT = TX.AYRIT, l = r.lun || r.nextLun; if (!l) return '<p class="muted">—</p>';
+    const sg = A.signOf(l.lon), it = (l.type === 'new' ? RT.NM : RT.FM)[sg];
+    const when = new Intl.DateTimeFormat('tr-TR', { timeZone: tz(), day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }).format(new Date(A.utcFromJD(l.jd)));
+    return `<p><b>${l.type === 'new' ? 'Yeni Ay' : 'Dolunay'} ${LOC[sg]} ${sym(SG[sg])}</b> · ${esc(when)}${r.lun ? ' <span class="tag">bugün</span>' : ''}${l.eclipse ? ` <span class="tag">${l.type === 'new' ? 'Güneş' : 'Ay'} tutulması (${esc(l.ecl)})</span>` : ''}</p>
+      ${l.eclipse ? `<p class="small">${esc(l.type === 'new' ? RT.ECL.solar : RT.ECL.lunar)}</p>` : ''}
+      <p><b>${esc(it[0])}</b> <span class="small muted">· odak: ${esc(it[1])}</span></p><p>${esc(it[2])}</p>
+      <p class="small muted">${l.type === 'new' ? 'Yeni Ay niyetleri, Ay’ın tam doğuşundan sonraki 48 saat içinde en güçlüdür.' : 'Dolunay bırakışları, Dolunay’dan önceki ve sonraki gün de yapılabilir.'}</p>`;
+  }
+  function ritualFor(l) { const it = (l.type === 'new' ? TX.AYRIT.NM : TX.AYRIT.FM)[A.signOf(l.lon)]; return it; }
+
+  /* ---------- Kişisel Gökyüzüm (doğum haritasına göre) ---------- */
+  function personal(ds, ap) {
+    const r = compute(ds), nat = AM.chartOf(ap), sid = nat.calc && nat.calc.zodiac === 'S';
+    const LT = (b, j) => A.norm(A.rawLon(b, j).lon - (sid ? A.ayanamsa(j) : 0));
+    const moonL = LT('Moon', r.jRef), mh = A.houseOf(moonL, nat.houses.cusps);
+    const tg = ['Sun', 'Moon', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto'].concat(nat.unknownTime ? [] : ['Asc', 'MC']);
+    const mAsp = [];
+    for (const id of tg) { const nl = nat.get(id).lon; for (const [a, k, n, g] of ASP) for (const sg of a === 0 || a === 180 ? [1] : [1, -1]) {
+      const f = j => A.wrap180(LT('Moon', j) - nl - sg * a); let x = r.j0, fx = f(x);
+      for (let jj = r.j0 + 1 / 24; jj <= r.j1 + 1e-9; jj += 1 / 24) { const fj = f(jj); if (fx < 0 && fj >= 0 && fj - fx < 30) { let lo = x, hi = jj; for (let i = 0; i < 28; i++) { const md = (lo + hi) / 2; if (f(md) < 0) lo = md; else hi = md; } mAsp.push({ jd: (lo + hi) / 2, id, a, k, n, g }); } x = jj; fx = fj; }
+    } }
+    mAsp.sort((u, v) => u.jd - v.jd);
+    const tr = [];
+    for (const b of ['Sun', 'Mercury', 'Venus', 'Mars', 'Jupiter', 'Saturn', 'Uranus', 'Neptune', 'Pluto']) {
+      const l0 = LT(b, r.jRef), l1 = LT(b, r.jRef + 0.1);
+      for (const id of tg) { const nl = nat.get(id).lon; for (const [a, k, n, g] of ASP) {
+        const d0 = Math.abs(Math.abs(A.wrap180(l0 - nl)) - a), d1 = Math.abs(Math.abs(A.wrap180(l1 - nl)) - a), lim = ['Sun', 'Mercury', 'Venus', 'Mars'].includes(b) ? 1.2 : 1;
+        if (d0 <= lim) tr.push({ b, id, a, k, n, g, orb: d0, app: d1 < d0, slow: !['Sun', 'Mercury', 'Venus'].includes(b) });
+      } }
+    }
+    tr.sort((u, v) => (v.slow - u.slow) || u.orb - v.orb);
+    return { r, nat, mh, mAsp, tr };
+  }
+  const P2 = id => (TX.P[id] ? TX.P[id].k : id === 'Asc' ? 'kişilik, beden ve ilk izlenim' : id === 'MC' ? 'kariyer, hedefler ve toplumsal yer' : nm(id));
+  function trText(x) {
+    const T = TX.TRN && TX.TRN[x.b] && TX.TRN[x.b][x.id];
+    if (T && x.slow) return T + ' ' + (TX.TRASP[x.k] || '');
+    return `${cap(D().PL[x.b])} ile natal ${nm(x.id)} konuların (${P2(x.id)}) ${D().ASPDAY[x.k]}`;
+  }
+  function viewKisisel() {
+    const ap = AM.activeP(); if (!ap) return `<div class="card"><p>Kişisel gökyüzü için önce bir doğum bilgisi ekleyin.</p><button class="btn" data-act="newperson">Kişi ekle</button></div>`;
+    const ds = S.dayDate || todayStr(), K = personal(ds, ap), KI = TX.KISI;
+    let h = navBar(ds, K.r);
+    h += `<p class="small muted" style="text-align:center">${esc(ap.name)} için, doğum haritasına göre${K.nat.unknownTime ? ' (saat bilinmediği için güneş haritası evleriyle)' : ''}.</p>`;
+    h += sec('☽', 'Bugünün duygusal iklimi', `<p>${esc(KI.MOONH[K.mh - 1])}</p><p class="small muted">Transit Ay natal ${K.mh}. evde (${esc(TX.H[K.mh].t)}).</p>`);
+    const top = K.tr[0];
+    h += sec('✦', 'Bugün sana ne söylüyor?', `<p class="dquote">${esc(top ? `Transit ${nm(top.b)}, natal ${nm(top.id)} ile ${top.n} yapıyor: ${D().PL[top.b]} temaları hayatında ${P2(top.id)} alanına dokunuyor.` : 'Bugün büyük transitler sakin; günün tonunu Ay belirliyor.')}</p>${top ? `<p class="small">${esc(trText(top))}</p>` : ''}`);
+    if (K.mAsp.length) h += sec('◷', 'Ay’ın natal haritana açıları', `<div class="list">${K.mAsp.map(x => `<div><b>${hm(x.jd)}</b> · ${G('Moon')} ${sym(x.g)} ${G(x.id)} Ay natal ${esc(nm(x.id))} ${x.n}<br><span class="small">${esc(D().MOONASP[x.id] ? D().MOONASP[x.id][x.k === 'con' ? 0 : x.k === 'tri' || x.k === 'sex' ? 1 : 2] : (x.k === 'tri' || x.k === 'sex' ? 'Duyguların ile ' : 'Duyguların ile ') + P2(x.id) + (x.k === 'tri' || x.k === 'sex' ? ' uyum içinde.' : ' arasında hassasiyet var.'))}</span></div>`).join('')}</div>`);
+    if (K.tr.length) h += sec('☉', 'Etkin transitler', `<div class="list">${K.tr.slice(0, 8).map(x => `<div>${G(x.b)} ${sym(x.g)} ${G(x.id)} <b>Transit ${esc(nm(x.b))} ${x.n} natal ${esc(nm(x.id))}</b> <span class="small muted">orb ${AM.dms(x.orb)} · ${x.app ? 'yaklaşıyor' : 'ayrılıyor'}</span><br><span class="small">${esc(trText(x))}</span></div>`).join('')}</div>`);
+    else h += sec('☉', 'Etkin transitler', '<p class="muted">Bugün 1° içinde transit yok.</p>');
+    const pm = KI.MANI[K.mh - 1];
+    h += sec('☾', 'Kişisel manifestin', `<p class="dmani">“${esc(pm)}”</p><div class="row" style="justify-content:flex-end">${favBtn(pm, 'Kişisel manifest')}</div>`);
+    return h;
+  }
+
+  /* ---------- Manifest Defterim ---------- */
+  function viewManifest() {
+    const ds = S.dayDate || todayStr(), N = ST.get('niyet', {}), F = ST.get('manifav', []);
+    const keys = Object.keys(N).sort().reverse();
+    let h = navBar(ds, compute(ds));
+    h += sec('✎', 'Bugünkü niyetim', `<textarea id="d_niyet" rows="4" placeholder="Bugün hayatıma davet ettiğim…">${esc(N[ds] || '')}</textarea><div class="row" style="margin-top:8px;justify-content:space-between"><span class="small muted">Şimdiki zamanda, olumlu ve kısa yazmak niyeti güçlendirir.</span><button class="btn" data-dact="saveniyet">Kaydet</button></div>`);
+    h += sec('♥', `Favori manifestlerim (${F.length})`, F.length ? `<div class="list">${F.slice().reverse().map(x => `<div><span class="dmani" style="font-size:16px">“${esc(x.t)}”</span><br><span class="small muted">${esc(x.src || '')} · ${esc(x.d || '')}</span> <button class="chip" data-dunfav="${esc(x.t)}">Kaldır</button></div>`).join('')}</div>` : '<p class="muted">Günün Rehberi’nde beğendiğin manifestlerin yanındaki “♡ Kaydet” ile buraya ekleyebilirsin.</p>');
+    h += sec('☰', `Niyet geçmişim (${keys.length})`, keys.length ? `<div class="list">${keys.map(k => `<div><b>${esc(new Intl.DateTimeFormat('tr-TR', { timeZone: 'UTC', day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(k + 'T12:00:00Z')))}</b><br>${esc(N[k]).replace(/\n/g, '<br>')}</div>`).join('')}</div>` : '<p class="muted">Henüz niyet yazılmadı.</p>');
+    return h;
+  }
+
+  /* ---------- Ruh hali takibi ---------- */
+  function viewRuh() {
+    const ds = S.dayDate || todayStr(), r = compute(ds), M = ST.get('mood', {}), cur = M[ds] || {};
+    let h = navBar(ds, r);
+    h += sec('♡', 'Bugün nasıl hissediyorsun?', `<div class="dsigns">${TX.MOODS.map(([k, e, n]) => `<button class="chip ${cur.m === k ? 'on' : ''}" data-dmood="${k}">${e} ${n}</button>`).join('')}</div>
+      <textarea id="d_moodnote" rows="3" placeholder="İstersen kısa bir not…">${esc(cur.n || '')}</textarea><div class="row" style="margin-top:8px;justify-content:flex-end"><button class="btn" data-dact="savemood">Kaydet</button></div>
+      <p class="small muted">Kayıtla birlikte o günün Ay burcu ve fazı da saklanır; zamanla ruh halinin Ay döngüsüyle ilişkisini görebilirsin.</p>`);
+    const ks = Object.keys(M).sort();
+    if (ks.length) {
+      const cnt = {}; for (const k of ks) cnt[M[k].m] = (cnt[M[k].m] || 0) + 1;
+      const name = k => (TX.MOODS.find(x => x[0] === k) || ['', '', k]);
+      const EL = ['Ateş', 'Toprak', 'Hava', 'Su'], byEl = [{}, {}, {}, {}], byPh = [{}, {}];
+      for (const k of ks) { const e = M[k]; if (e.ms == null) continue; const el = e.ms % 4; byEl[el][e.m] = (byEl[el][e.m] || 0) + 1; const ph = e.ph < 4 ? 0 : 1; byPh[ph][e.m] = (byPh[ph][e.m] || 0) + 1; }
+      const top = o => { const e = Object.entries(o).sort((a, b) => b[1] - a[1])[0]; return e ? name(e[0])[1] + ' ' + name(e[0])[2].toLocaleLowerCase('tr-TR') + ` (${e[1]})` : '—'; };
+      const total = ks.length;
+      h += sec('▤', `Ruh hali haritam (${total} gün)`, `<div class="list">${Object.entries(cnt).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div>${name(k)[1]} <b>${name(k)[2]}</b> <span class="small muted">${v} gün</span><div class="bar"><i style="width:${(v / total * 100).toFixed(0)}%"></i></div></div>`).join('')}</div>
+        ${total >= 7 ? `<h4>Ay ile ilişkin</h4><p class="small">Ay ateş burçlarındayken en sık: ${top(byEl[0])} · toprak: ${top(byEl[1])} · hava: ${top(byEl[2])} · su: ${top(byEl[3])}.<br>Büyüyen Ay’da: ${top(byPh[0])} · küçülen Ay’da: ${top(byPh[1])}.</p>` : `<p class="small muted">Ay ile ilişkiyi görmek için en az 7 gün kayıt gerekiyor (${total}/7).</p>`}`);
+      h += sec('☰', 'Son kayıtlar', `<div class="list">${ks.slice(-30).reverse().map(k => `<div><b>${esc(k.split('-').reverse().join('.'))}</b> · ${name(M[k].m)[1]} ${esc(name(M[k].m)[2])} <span class="small muted">· Ay ${M[k].ms != null ? SIGNS[M[k].ms] : ''} ${M[k].ph != null ? '· ' + PHN[M[k].ph] : ''}</span>${M[k].n ? `<br><span class="small">${esc(M[k].n)}</span>` : ''}</div>`).join('')}</div>`);
+    }
+    return h;
+  }
+
+  /* ---------- 21 Günlük Manifest Serisi ---------- */
+  function viewSeri() {
+    const SE = ST.get('seri', null), L = TX.SERI;
+    if (!SE) return sec('✧', '21 Günlük Manifest Serisi', `<p>Üç haftalık bir niyet yolculuğu: ilk hafta <b>bırakmak ve alan açmak</b>, ikinci hafta <b>niyeti güçlendirmek</b>, üçüncü hafta <b>eyleme ve almaya geçmek</b>. Her gün 3–5 dakikalık küçük bir görev ve bir olumlama.</p><label for="d_seriniyet">Bu seri için niyetin</label><textarea id="d_seriniyet" rows="3" placeholder="Örn. Hayatıma huzurlu ve bereketli bir iş düzeni davet ediyorum."></textarea><div class="row" style="margin-top:8px;justify-content:flex-end"><button class="btn" data-dact="seristart">Seriye başla</button></div>`);
+    const day = Math.min(21, Math.max(1, Math.floor((Date.parse(todayStr()) - Date.parse(SE.start)) / 864e5) + 1)), done = SE.done || {};
+    const cur = S.seriDay || day, it = L[cur - 1], nDone = Object.keys(done).length;
+    let h = sec('✧', `21 Günlük Seri · ${cur}. gün`, `<p class="small muted">Niyetin: “${esc(SE.niyet || '')}” · Başlangıç ${esc(SE.start.split('-').reverse().join('.'))} · Tamamlanan ${nDone}/21</p><div class="bar" style="margin:6px 0 12px"><i style="width:${(nDone / 21 * 100).toFixed(0)}%"></i></div>
+      <h4 style="margin-top:0">${cur <= 7 ? '1. hafta · Bırakmak' : cur <= 14 ? '2. hafta · Niyeti güçlendirmek' : '3. hafta · Eyleme geçmek'} — ${esc(it.t)}</h4><p>${esc(it.g)}</p><p class="dmani">“${esc(it.a)}”</p>
+      <textarea id="d_serinote" rows="3" placeholder="Bugünkü notun…">${esc((done[cur] && done[cur].n) || '')}</textarea>
+      <div class="row" style="margin-top:8px;justify-content:space-between"><button class="btn ghost" data-dact="sericur" ${cur > 1 ? '' : 'disabled'} data-v="${cur - 1}">‹ Önceki</button><button class="btn" data-dact="seridone" data-v="${cur}">${done[cur] ? '✓ Tamamlandı (güncelle)' : 'Bugünü tamamla'}</button><button class="btn ghost" data-dact="sericur" ${cur < day ? '' : 'disabled'} data-v="${cur + 1}">Sonraki ›</button></div>
+      ${cur > day ? '' : ''}${nDone === 21 ? '<p><b>Tebrikler! 21 günü tamamladın.</b> Yeni bir seri başlatabilirsin.</p>' : ''}`);
+    h += `<div class="dgrid21">${L.map((x, i) => `<button class="chip ${done[i + 1] ? 'on' : ''} ${i + 1 === cur ? 'cur' : ''}" data-dact="sericur" data-v="${i + 1}" ${i + 1 > day ? 'disabled' : ''} title="${esc(x.t)}">${i + 1}</button>`).join('')}</div>`;
+    h += `<div class="row" style="justify-content:center;margin-top:10px"><button class="btn ghost" data-dact="serireset">Seriyi sıfırla</button></div>`;
+    return h;
+  }
+
+  /* ---------- Günün bildirimi: takvime sabah mesajları ---------- */
+  function morningMsg(ds, ap) {
+    const r = compute(ds), c = content(r);
+    if (ap) { try { const K = personal(ds, ap); const first = TX.KISI.MOONH[K.mh - 1].split(':')[1] || TX.KISI.MOONH[K.mh - 1]; return { title: `🌙 ${ap.name.split(' ')[0]}, Ay ${K.mh}. evinde:${first.split('.')[0]}.`, body: `${TX.KISI.MOONH[K.mh - 1]}\n\nGünün mesajı: ${c.msg}\nManifest: ${TX.KISI.MANI[K.mh - 1]}\nGünün kartı: ${c.card.n} — ${c.card.d}` }; } catch (e) { } }
+    return { title: `🌙 ${c.msg}`, body: `${c.phaseMsg}\n\nManifest: ${c.mani}\nGünün kartı: ${c.card.n} — ${c.card.d}\nGünün sorusu: ${c.q}` };
+  }
+  function icsEsc(t) { return String(t).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n'); }
+  function fold(line) { const out = []; let s = line; while (s.length > 70) { out.push(s.slice(0, 70)); s = ' ' + s.slice(70); } out.push(s); return out.join('\r\n'); }
+  function buildICS(days, saat) {
+    const ap = AM.activeP(), [hh, mm] = (saat || '08:00').split(':'), now = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+    const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//AstroMidas//Gunluk//TR', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:AstroMidas'];
+    let ds = todayStr();
+    for (let i = 0; i < days; i++, ds = shiftDate(ds, 1)) {
+      const m = morningMsg(ds, ap), d = ds.replace(/-/g, '');
+      L.push('BEGIN:VEVENT', `UID:astromidas-${d}-${ap ? ap.id : 'genel'}@astromidas`, `DTSTAMP:${now}`, `DTSTART:${d}T${hh}${mm}00`, `DURATION:PT10M`, fold('SUMMARY:' + icsEsc(m.title)), fold('DESCRIPTION:' + icsEsc(m.body + '\n\n' + location.href.split('#')[0])), 'BEGIN:VALARM', 'ACTION:DISPLAY', fold('DESCRIPTION:' + icsEsc(m.title)), 'TRIGGER:PT0M', 'END:VALARM', 'END:VEVENT');
+    }
+    L.push('END:VCALENDAR'); return L.join('\r\n');
+  }
+  async function saveFile(name, text, type) {
+    try { const dl = await claude.use('downloads'); if (dl) { await dl.save({ filename: name, data: new Blob([text], { type }) }); AM.toast('Dosya indirildi'); return; } } catch (e) { }
+    try { const f = new File([text], name, { type }); if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: 'AstroMidas bildirimleri' }); return; } } catch (e) { }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; document.body.appendChild(a); a.click(); a.remove(); AM.toast('Dosya indirildi');
+  }
+  function viewBildirim() {
+    const B0 = ST.get('bildirim', { saat: '08:00' }), ap = AM.activeP(), m = morningMsg(todayStr(), ap);
+    return sec('🔔', 'Günün bildirimi', `<p>Her sabah seçtiğin saatte telefonunun takviminden bildirim gelir. Bildirimde o güne özel ${ap ? `<b>${esc(ap.name)}</b> için doğum haritasına göre` : 'genel'} astrolojik mesaj yazar; dokununca ayrıntılar ve uygulamanın bağlantısı açılır.</p>
+      <div class="grid2"><div><label for="d_saat">Bildirim saati</label><input type="time" id="d_saat" value="${esc(B0.saat)}"></div><div><label for="d_gun">Kaç gün?</label><select id="d_gun"><option value="30">30 gün</option><option value="60">60 gün</option><option value="90">90 gün</option></select></div></div>
+      <div class="row" style="margin-top:10px;justify-content:center"><button class="btn" data-dact="ics">Sabah bildirimlerini takvime ekle</button></div>
+      <h4>Yarın sabahki bildirim örneği</h4><div class="card small" style="margin:6px 0"><b>${esc(morningMsg(shiftDate(todayStr(), 1), ap).title)}</b><br>${esc(morningMsg(shiftDate(todayStr(), 1), ap).body).replace(/\n/g, '<br>')}</div>
+      <p class="small muted">iPhone: indirilen dosyayı açıp “Tümünü Ekle” deyin. Android: dosyayı Google Takvim ile açın. Süre bitince buradan yeniden ekleyin. Kişiye özel mesaj için önce Defter’de kişiyi seçin.</p>`);
+  }
+
+  /* ---------- Ana görünüm (alt sekmelerle) ---------- */
+  function view() {
+    const subs = [['bugun', 'Bugün'], ['kisisel', 'Kişisel gökyüzüm'], ['manifest', 'Manifest defterim'], ['ruh', 'Ruh hali'], ['seri', '21 gün'], ['bildirim', 'Bildirim']];
+    const cur = S.sub.gunluk || 'bugun';
+    const nav = `<div class="sub" role="tablist" style="margin-top:12px">${subs.map(([k, t]) => `<button data-sub="gunluk:${k}" class="${cur === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+    return nav + ({ bugun: viewBugun, kisisel: viewKisisel, manifest: viewManifest, ruh: viewRuh, seri: viewSeri, bildirim: viewBildirim }[cur] || viewBugun)();
+  }
+  document.addEventListener('click', e => {
+    const t = e.target.closest('[data-dfav],[data-dunfav],[data-dmood],[data-dact]'); if (!t) return;
+    const F = ST.get('manifav', []);
+    if (t.dataset.dfav != null) { const i = F.findIndex(x => x.t === t.dataset.dfav); if (i >= 0) F.splice(i, 1); else F.push({ t: t.dataset.dfav, src: t.dataset.dsrc, d: (S.dayDate || todayStr()).split('-').reverse().join('.') }); ST.set('manifav', F); persist(); AM.toast(i >= 0 ? 'Favorilerden çıkarıldı' : 'Manifest Defterim’e kaydedildi'); root.render(); return; }
+    if (t.dataset.dunfav != null) { ST.set('manifav', F.filter(x => x.t !== t.dataset.dunfav)); persist(); root.render(); return; }
+    if (t.dataset.dmood) { S.moodPick = t.dataset.dmood; document.querySelectorAll('[data-dmood]').forEach(b => b.classList.toggle('on', b === t)); return; }
+    const a = t.dataset.dact, ds = S.dayDate || todayStr();
+    if (a === 'saveniyet') { const N = ST.get('niyet', {}), v = $('#d_niyet').value.trim(); if (v) N[ds] = v; else delete N[ds]; ST.set('niyet', N); persist(); AM.toast('Niyet kaydedildi'); root.render(); }
+    else if (a === 'savemood') { const M = ST.get('mood', {}), r = compute(ds), sel = S.moodPick || (M[ds] && M[ds].m); if (!sel) { AM.toast('Önce bir ruh hali seç'); return; } M[ds] = { m: sel, n: $('#d_moodnote').value.trim(), ms: r.ms, ph: r.phi }; ST.set('mood', M); S.moodPick = null; persist(); AM.toast('Kaydedildi'); root.render(); }
+    else if (a === 'seristart') { ST.set('seri', { start: todayStr(), niyet: $('#d_seriniyet').value.trim(), done: {} }); S.seriDay = null; persist(); root.render(); }
+    else if (a === 'seridone') { const SE = ST.get('seri', null); if (!SE) return; SE.done = SE.done || {}; SE.done[t.dataset.v] = { n: $('#d_serinote').value.trim(), d: todayStr() }; ST.set('seri', SE); persist(); AM.toast(t.dataset.v + '. gün tamamlandı'); root.render(); }
+    else if (a === 'sericur') { if (t.disabled) return; S.seriDay = +t.dataset.v; root.render(); }
+    else if (a === 'serireset') { if (confirmReset()) { ST.set('seri', null); S.seriDay = null; persist(); root.render(); } }
+    else if (a === 'ics') { const saat = $('#d_saat').value || '08:00', n = +$('#d_gun').value || 30; ST.set('bildirim', { saat }); persist(); saveFile('AstroMidas-sabah-bildirimleri.ics', buildICS(n, saat), 'text/calendar'); }
+  });
+  let resetArm = 0; function confirmReset() { if (Date.now() - resetArm < 4000) return true; resetArm = Date.now(); AM.toast('Sıfırlamak için tekrar dokun'); return false; }
+
   // olaylar
   document.addEventListener('click', e => {
     const t = e.target.closest('[data-dday],[data-dsign],[data-dact]'); if (!t) return;
@@ -214,5 +398,5 @@
     if (t.dataset.dact === 'copy') { const txt = plainText(); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => AM.toast('Günün içeriği kopyalandı'), () => { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); AM.toast('Günün içeriği kopyalandı'); } catch (er) { AM.toast('Kopyalanamadı'); } ta.remove(); }); }
   });
   document.addEventListener('change', e => { if (e.target.id === 'd_pick' && e.target.value) { S.dayDate = e.target.value === todayStr() ? null : e.target.value; root.render(); } });
-  root.DAILY = { view, compute, content, signReading, plainText, tarotCard, cardSVG, todayStr };
+  root.DAILY = { view, ritualFor, exportData, importData, compute, content, signReading, plainText, tarotCard, cardSVG, todayStr };
 })(window);

@@ -249,6 +249,13 @@ nav.tabs svg{width:calc(var(--u)*16)!important;height:calc(var(--u)*16)!importan
 .tcard{width:120px;height:auto;flex:none;filter:drop-shadow(0 6px 16px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(170,190,240,.18))}
 .dsigns{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}.dsigns .chip{font-size:13px;padding:7px 10px}
 .dh2{text-align:center;margin-top:22px}
+.dgrid21{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}.dgrid21 .chip{padding:8px 0;justify-content:center;text-align:center}.dgrid21 .chip.cur{outline:2px solid #e8eefc;outline-offset:1px}.dgrid21 .chip:disabled{opacity:.35}
+.tab-gunluk .sub{flex-wrap:nowrap;overflow-x:auto}
+/* === Referans görselin gökyüzü: arka plan resmi === */
+.moonsky{background:#0c0f1e url(sky-bg.jpg) no-repeat!important;background-size:100vw auto!important;background-position:center -12.6vw!important}
+.moonsky .neb,.moonsky .stars,.moonsky .glow,.moonsky .beam,.moonsky .flare{display:none!important}
+.an::before,.an::after{display:none!important}
+@media(min-aspect-ratio:3/4){.moonsky{background-size:auto 112%!important;background-position:center 85%!important}}
 @media(max-width:600px){table{font-size:12.5px}.stack thead{display:none}.stack tr{display:grid;padding-block:8px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:2px 0;padding-inline-start:7.5em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7em;margin-inline-start:-7.5em;color:var(--mut);font-size:12px}.stack td:empty{display:none}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.today{font-size:11.5px}}
 @media(prefers-reduced-motion:no-preference){.spin{animation:spin 240s linear infinite;transform-origin:50% 50%}@keyframes spin{to{transform:rotate(360deg)}}}
 @media print{nav.tabs,.tabwrap,.noprint,.toast{display:none!important}body{background:#0b1226!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.app{padding-bottom:0!important}.page{break-inside:auto;page-break-before:always;margin:0 0 0!important;border:0!important;border-radius:0!important}.page.cover img{max-width:300px!important}.page.cover .wheelbox{max-width:380px!important}h2,h3{break-after:avoid}p,li,tr{break-inside:avoid}.page:first-child{page-break-before:auto}#rep>.page:first-of-type{page-break-before:auto}}
@@ -284,6 +291,7 @@ nav.tabs svg{width:calc(var(--u)*16)!important;height:calc(var(--u)*16)!importan
 <script src="txG.js"></script>
 <script src="txH.js"></script>
 <script src="txI.js"></script>
+<script src="txJ.js"></script>
 <script src="txedit.js"></script>
 <script src="app.js"></script>
 <script src="views.js"></script>
