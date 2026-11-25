@@ -235,6 +235,20 @@ nav.tabs svg{width:calc(var(--u)*16)!important;height:calc(var(--u)*16)!importan
 .card,.page{background:linear-gradient(170deg,rgba(52,62,96,.9),rgba(22,28,52,.94)) padding-box,linear-gradient(135deg,rgba(255,255,255,.72),rgba(190,204,232,.26) 50%,rgba(235,240,252,.5)) border-box!important;backdrop-filter:none!important}
 .card::before,.page::before{opacity:.22}
 .sub button,.chip{background:linear-gradient(170deg,rgba(60,72,108,.9),rgba(24,30,54,.94)) padding-box,linear-gradient(135deg,rgba(255,255,255,.7),rgba(190,204,232,.25) 60%,rgba(235,240,252,.45)) border-box!important}
+/* === Günlük Rehber === */
+.tab-gunluk .dnav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 4px}
+.dnav .dtitle{text-align:center;flex:1}.dnav .dtitle b{display:block;font:500 20px/1.2 'Cormorant Garamond',Georgia,serif}.dnav .dtitle small{color:#b9c2d6;font-size:12px}
+.dnav .chip{min-width:44px;font-size:20px;line-height:1}
+.linkbtn{background:none;border:0;color:#cfdcff;text-decoration:underline;font:inherit;cursor:pointer;padding:0}
+.dsec h3{display:flex;align-items:center;gap:10px;margin:0 0 8px;font:600 17px/1.2 'Cormorant Garamond',Georgia,serif;letter-spacing:.01em}
+.dsec h4{margin:14px 0 6px;font:600 14px Manrope,system-ui,sans-serif;color:#e6ebf4}
+.dic{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#aab4c8);color:#1b2340;font-size:14px;flex:none;box-shadow:0 0 10px rgba(200,215,255,.45)}
+.dquote{font:500 19px/1.4 'Cormorant Garamond',Georgia,serif;color:#f4f6fb;margin:4px 0 8px}
+.dmani{font:italic 500 18px/1.45 'Cormorant Garamond',Georgia,serif;color:#f4f6fb;margin:4px 0 8px}
+.dcard{display:flex;gap:16px;align-items:center;margin-bottom:6px}
+.tcard{width:120px;height:auto;flex:none;filter:drop-shadow(0 6px 16px rgba(0,0,0,.5)) drop-shadow(0 0 10px rgba(170,190,240,.18))}
+.dsigns{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 12px}.dsigns .chip{font-size:13px;padding:7px 10px}
+.dh2{text-align:center;margin-top:22px}
 @media(max-width:600px){table{font-size:12.5px}.stack thead{display:none}.stack tr{display:grid;padding-block:8px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:2px 0;padding-inline-start:7.5em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7em;margin-inline-start:-7.5em;color:var(--mut);font-size:12px}.stack td:empty{display:none}.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}.today{font-size:11.5px}}
 @media(prefers-reduced-motion:no-preference){.spin{animation:spin 240s linear infinite;transform-origin:50% 50%}@keyframes spin{to{transform:rotate(360deg)}}}
 @media print{nav.tabs,.tabwrap,.noprint,.toast{display:none!important}body{background:#0b1226!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}.app{padding-bottom:0!important}.page{break-inside:auto;page-break-before:always;margin:0 0 0!important;border:0!important;border-radius:0!important}.page.cover img{max-width:300px!important}.page.cover .wheelbox{max-width:380px!important}h2,h3{break-after:avoid}p,li,tr{break-inside:avoid}.page:first-child{page-break-before:auto}#rep>.page:first-of-type{page-break-before:auto}}
@@ -267,9 +281,13 @@ nav.tabs svg{width:calc(var(--u)*16)!important;height:calc(var(--u)*16)!importan
 <script src="txD2.js"></script>
 <script src="txE.js"></script>
 <script src="txF.js"></script>
+<script src="txG.js"></script>
+<script src="txH.js"></script>
+<script src="txI.js"></script>
 <script src="txedit.js"></script>
 <script src="app.js"></script>
 <script src="views.js"></script>
+<script src="daily.js"></script>
 <script>if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});</script>
 </body>
 </html>

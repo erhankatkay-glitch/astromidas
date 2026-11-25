@@ -1,0 +1,101 @@
+/* Tarot: 78 kartlık deste — anahtar kelimeler, anlam ve günlük yansıma. Metinler özgündür; kart çizimleri uygulamanın kendi sembolik tasarımıdır. */
+var TX = (typeof TX !== 'undefined') ? TX : {};
+TX.TAROT = {
+  MAJOR: [
+    { n: 'Deli', e: 'deli', k: 'başlangıç, saflık, cesaret, bilinmeze adım', m: 'Hiçbir şey bilmeden ama her şeye açık olarak yola çıkan ruh. Deli, güvenle atılan ilk adımın ve hayatın sürprizlerine teslimiyetin kartıdır.', d: 'Bugün planlamadan bir şey dene. Mükemmel zamanı bekleme; merak ettiğin kapıyı arala ve neler olacağını gör.' },
+    { n: 'Büyücü', e: 'buyucu', k: 'irade, beceri, odak, yaratma gücü', m: 'İhtiyacın olan bütün araçlar elinde. Büyücü, niyeti eyleme, düşünceyi gerçeğe dönüştürme gücünü temsil eder.', d: 'Bugün dağınık enerjini tek bir hedefe topla. Söylediğin ve yaptığın aynı yöne baktığında sonuç hızla gelir.' },
+    { n: 'Başrahibe', e: 'basrahibe', k: 'sezgi, sır, iç bilgi, sessizlik', m: 'Perdenin ardındaki bilgiyi taşıyan sessiz bilge. Cevap dışarıda değil, içindeki dinginlikte.', d: 'Bugün konuşmaktan çok dinle; özellikle kendi iç sesini. Bir şey ters geliyorsa, sezgine güven.' },
+    { n: 'İmparatoriçe', e: 'imparatorice', k: 'bereket, şefkat, doğa, yaratıcılık', m: 'Doğurganlığın ve bolluğun kartı. İmparatoriçe beslemeyi, güzelliği ve kendiliğinden büyüyen yaşamı anlatır.', d: 'Bugün kendini ve çevreni besle: güzel bir yemek, doğada yürüyüş ya da yaratıcı bir uğraş sana iyi gelir.' },
+    { n: 'İmparator', e: 'imparator', k: 'düzen, yapı, otorite, koruma', m: 'Kaosa biçim veren güç. İmparator, sağlam sınırları, liderliği ve sorumluluk almayı temsil eder.', d: 'Bugün bir konuda net bir yapı kur: plan yap, kural koy, sözünü tut. Kararlılığın sana güven verecek.' },
+    { n: 'Başrahip', e: 'basrahip', k: 'gelenek, öğreti, rehberlik, inanç', m: 'Kuşaktan kuşağa aktarılan bilgelik. Aziz, bir öğretmenden ya da gelenekten öğrenmeyi ve ortak değerleri anlatır.', d: 'Bugün güvendiğin birine danış ya da köklü bir bilgiden yararlan. Tekerleği yeniden icat etmek zorunda değilsin.' },
+    { n: 'Âşıklar', e: 'asiklar', k: 'seçim, sevgi, uyum, değerler', m: 'Kalbin seçimi. Âşıklar yalnızca romantik bağı değil, değerlerinle uyumlu bir karar vermeyi de temsil eder.', d: 'Bugün bir seçim yaparken kalbine sor: bu, gerçekten değer verdiğim şeyle uyumlu mu?' },
+    { n: 'Savaş Arabası', e: 'araba', k: 'kararlılık, zafer, yön, irade', m: 'Zıt güçleri tek yöne süren irade. Savaş Arabası, odaklanmış çabayla gelen ilerlemenin kartıdır.', d: 'Bugün hedefine kilitlen ve dikkatini dağıtan şeylere nazikçe “sonra” de. İlerleme senin elinde.' },
+    { n: 'Güç', e: 'guc', k: 'iç güç, sabır, şefkat, cesaret', m: 'Kaba kuvvet değil, yumuşak ama sarsılmaz bir güç. Güç kartı, içindeki vahşi yanı sevgiyle evcilleştirmeyi anlatır.', d: 'Bugün zor bir duyguya ya da kişiye sertlikle değil, sakin bir kararlılıkla yaklaş. Nezaket de güçtür.' },
+    { n: 'Ermiş', e: 'ermis', k: 'iç gözlem, yalnızlık, bilgelik, arayış', m: 'Kendi fenerini taşıyan yolcu. Ermiş, dış gürültüden çekilip içsel rehberliği bulmayı temsil eder.', d: 'Bugün kendine sessiz bir zaman ayır. Yalnız kalmak, kendi cevabını duymanın en kısa yolu olabilir.' },
+    { n: 'Kader Çarkı', e: 'cark', k: 'döngüler, şans, dönüm noktası, kader', m: 'Hayatın sürekli dönen çarkı. Bu kart, kontrol edemediğin değişimleri ve beklenmedik fırsatları anlatır.', d: 'Bugün akışa direnme. Bir kapı kapanıyorsa başka biri açılıyordur; değişimi bir fırsat olarak gör.' },
+    { n: 'Adalet', e: 'adalet', k: 'denge, hakikat, sorumluluk, sonuç', m: 'Eylemlerin karşılığını getiren terazi. Adalet, dürüstlüğü, açık kararları ve sorumluluk almayı temsil eder.', d: 'Bugün kendine karşı dürüst ol ve kararlarını gerçeklere dayandır. Doğru olanı yapmak uzun vadede kazandırır.' },
+    { n: 'Asılan Adam', e: 'asilan', k: 'teslimiyet, bakış açısı, bekleyiş, fedakârlık', m: 'Dünyaya ters açıdan bakan bilge. Asılan Adam, beklemenin ve bakış açısını değiştirmenin getirdiği aydınlanmayı anlatır.', d: 'Bugün bir sorunu zorlamak yerine ona farklı bir açıdan bak. Durmak da bazen ilerlemektir.' },
+    { n: 'Ölüm', e: 'olum', k: 'bitiş, dönüşüm, yenilenme, bırakma', m: 'Fiziksel ölüm değil, bir dönemin kapanışı. Ölüm kartı, eskiyi bırakarak yeniye yer açmanın kartıdır.', d: 'Bugün artık sana hizmet etmeyen bir alışkanlığı, düşünceyi ya da bağı bırakmayı düşün. Son, başlangıcın kapısıdır.' },
+    { n: 'Denge', e: 'denge', k: 'ılımlılık, sabır, uyum, şifa', m: 'Zıtları ustalıkla karıştıran simyacı. Denge kartı, ölçülülüğü ve zamanla gelen iyileşmeyi anlatır.', d: 'Bugün aşırılıklardan uzak dur; orta yolu bul. Yavaş ve dengeli adımlar seni daha sağlam taşır.' },
+    { n: 'Şeytan', e: 'seytan', k: 'bağımlılık, gölge, arzu, kısıtlanma', m: 'Kendi isteğimizle taktığımız zincirler. Şeytan, bizi bağlayan alışkanlıkları ve bastırılmış arzuları görünür kılar.', d: 'Bugün seni tutsak eden bir alışkanlığa ya da düşünceye dürüstçe bak. Zincirin kilidi çoğu zaman sende.' },
+    { n: 'Kule', e: 'kule', k: 'ani değişim, yıkım, uyanış, gerçek', m: 'Sağlam sandığımız yapıların çöküşü. Kule, sarsıcı ama özgürleştirici gerçeklerin kartıdır.', d: 'Bugün beklenmedik bir gelişme planlarını sarsabilir. Direnme; çürük olan yıkılınca daha sağlamını kurabilirsin.' },
+    { n: 'Yıldız', e: 'yildiz', k: 'umut, ilham, şifa, inanç', m: 'Fırtınadan sonra parlayan umut. Yıldız, iyileşmeyi, ruhsal yenilenmeyi ve geleceğe güveni temsil eder.', d: 'Bugün umudunu tazele. Hayallerini yeniden hatırla ve onlara küçük bir adımla güven tazele.' },
+    { n: 'Ay', e: 'ay', k: 'sezgi, belirsizlik, rüyalar, bilinçdışı', m: 'Ay ışığında her şey olduğundan farklı görünür. Bu kart, korkuları, yanılsamaları ve derin sezgileri anlatır.', d: 'Bugün her şey net olmayabilir; acele karar verme. Rüyalarına ve iç seslerine dikkat et ama korkularını gerçek sanma.' },
+    { n: 'Güneş', e: 'gunes', k: 'neşe, başarı, canlılık, açıklık', m: 'Tüm gölgeleri silen parlak ışık. Güneş, saf mutluluğu, başarıyı ve kendin olmanın özgürlüğünü temsil eder.', d: 'Bugün kendini olduğun gibi göster ve hayatın tadını çıkar. İçtenliğin kapıları açacak.' },
+    { n: 'Mahkeme', e: 'mahkeme', k: 'uyanış, çağrı, değerlendirme, yeniden doğuş', m: 'İçten gelen bir çağrıya yanıt verme zamanı. Bu kart, geçmişi değerlendirip yeni bir hayata uyanmayı anlatır.', d: 'Bugün geçmişini yargılamadan değerlendir ve seni çağıran yeni yola kulak ver.' },
+    { n: 'Dünya', e: 'dunya', k: 'tamamlanma, bütünlük, başarı, döngünün sonu', m: 'Bir yolculuğun başarıyla tamamlanışı. Dünya, bütünlüğü, kutlamayı ve yeni bir döngüye hazır oluşu temsil eder.', d: 'Bugün tamamladığın bir şeyi kutla. Bir döngü kapanıyor; bir sonrakine bütünlük duygusuyla geç.' }
+  ],
+  SUITS: [
+    { n: 'Değnekler', s1: 'Değnek', gen: 'Değneklerin', g: 'tutku, yaratıcılık, eylem (Ateş)' },
+    { n: 'Kupalar', s1: 'Kupa', gen: 'Kupaların', g: 'duygular, ilişkiler, sezgi (Su)' },
+    { n: 'Kılıçlar', s1: 'Kılıç', gen: 'Kılıçların', g: 'düşünce, karar, iletişim (Hava)' },
+    { n: 'Tılsımlar', s1: 'Tılsım', gen: 'Tılsımların', g: 'para, beden, iş, maddi dünya (Toprak)' }
+  ],
+  RANKS: ['Ası', 'İkilisi', 'Üçlüsü', 'Dörtlüsü', 'Beşlisi', 'Altılısı', 'Yedilisi', 'Sekizlisi', 'Dokuzlusu', 'Onlusu', 'Valesi', 'Şövalyesi', 'Kraliçesi', 'Kralı'],
+  MINOR: [
+    [ // Değnekler
+      ['ilham, yeni tutku, kıvılcım', 'Yeni bir tutkunun ya da yaratıcı fikrin ilk kıvılcımı.', 'Bugün aklına gelen ilk heyecan verici fikri bir kenara yazma, hemen küçük bir adım at.'],
+      ['planlama, vizyon, seçim', 'Ufka bakıp yön seçme anı; elindekiyle yetinmek mi, daha fazlası mı?', 'Bugün uzun vadeli planını gözden geçir; bir sonraki büyük adımın ne olacağına karar ver.'],
+      ['genişleme, bekleyiş, öngörü', 'Ektiklerinin dönüşünü beklerken ufku izlemek.', 'Bugün attığın adımların sonuçlarını sabırla izle; yeni fırsatlar uzaktan geliyor.'],
+      ['kutlama, yuva, istikrar', 'Bir başarıyı sevdiklerinle kutlama ve güvenli bir zemine yerleşme.', 'Bugün küçük de olsa bir şeyi kutla; aidiyet duygusunu besle.'],
+      ['rekabet, çatışma, sürtüşme', 'Farklı iradelerin çarpıştığı, enerjinin dağıldığı bir an.', 'Bugün tartışmalarda kazanmak yerine ortak noktayı ara; rekabeti oyuna çevir.'],
+      ['zafer, takdir, özgüven', 'Emeğinin görüldüğü ve alkışlandığı an.', 'Bugün başarını saklama; takdiri kabul etmeyi öğren.'],
+      ['savunma, kararlılık, duruş', 'Kendi yerini ve fikrini savunma cesareti.', 'Bugün inandığın şey için nazik ama net bir duruş sergile.'],
+      ['hız, haber, hareket', 'Olayların birden hızlandığı, haberlerin peş peşe geldiği an.', 'Bugün gelişmeler hızlı; esnek kal ve fırsatları anında değerlendir.'],
+      ['dayanıklılık, son çaba, sınırlar', 'Yorgun ama pes etmeyen savaşçı; hedefe çok az kaldı.', 'Bugün yorgun hissetsen de vazgeçme; sadece enerjini akıllıca kullan.'],
+      ['yük, aşırı sorumluluk, baskı', 'Her şeyi tek başına taşımaya çalışmanın ağırlığı.', 'Bugün bir yükünü bırak ya da paylaş; her şeyi sen taşımak zorunda değilsin.'],
+      ['keşif, coşku, yeni haber', 'Heyecanlı bir öğrenci gibi yeni bir maceraya açılmak.', 'Bugün yeni bir şey öğrenmeye ya da denemeye gönüllü ol.'],
+      ['macera, atılganlık, tutku', 'Ateşli bir hızla harekete geçen cesur yolcu.', 'Bugün cesur ol ama düşünmeden atlamamaya da dikkat et.'],
+      ['özgüven, sıcaklık, karizma', 'Kendi ışığından emin, cömert ve çekici bir güç.', 'Bugün kendine güvenle yürü; sıcaklığın insanları sana çekecek.'],
+      ['liderlik, vizyon, girişimcilik', 'Büyük resmi gören ve başkalarına ilham veren lider.', 'Bugün inisiyatif al ve vizyonunu paylaş; insanlar seni izlemeye hazır.']
+    ],
+    [ // Kupalar
+      ['yeni duygu, sevgi, şefkat', 'Kalbin taşan kupası: yeni bir sevgi ya da duygusal başlangıç.', 'Bugün kalbini aç; sevgiyi vermek ve almak için kendine izin ver.'],
+      ['birlik, karşılıklılık, çekim', 'İki kalbin eşit biçimde buluşması.', 'Bugün bir ilişkide karşılıklılığı gözet; içten bir bağ kur.'],
+      ['dostluk, kutlama, topluluk', 'Sevinci arkadaşlarla paylaşmanın coşkusu.', 'Bugün dostlarınla bağlantı kur; paylaşılan sevinç çoğalır.'],
+      ['doyumsuzluk, içe dönüş, kayıtsızlık', 'Önündeki fırsatları göremeyecek kadar içe kapanmak.', 'Bugün sahip olduklarını fark et; sunulan bir teklifi görmezden gelme.'],
+      ['kayıp, hayal kırıklığı, yas', 'Dökülen kupalara bakarken ayakta kalanları unutmak.', 'Bugün üzüldüğün şeyi kabul et ama hâlâ elinde olanları da gör.'],
+      ['anılar, masumiyet, nostalji', 'Geçmişten gelen tatlı bir anı ya da çocukluk sevinci.', 'Bugün eski bir dostu ara ya da güzel bir anıyı yeniden yaşa.'],
+      ['hayaller, seçenekler, yanılsama', 'Pek çok seçenek arasında hayallere dalmak.', 'Bugün hayal kurmak güzel ama gerçekçi olanı seçmeye odaklan.'],
+      ['ayrılma, arayış, yürüyüp gitme', 'Artık doyurmayanı geride bırakıp daha derin bir anlam aramak.', 'Bugün seni beslemeyen bir durumdan uzaklaşma cesareti göster.'],
+      ['dilek, memnuniyet, doyum', 'Dileklerin gerçekleştiği, kalbin hoşnut olduğu kart.', 'Bugün bir dilek tut ve sahip olduğun güzelliklerin tadını çıkar.'],
+      ['aile mutluluğu, uyum, duygusal tamamlanma', 'Sevdiklerinle paylaşılan kalıcı huzur.', 'Bugün ailen ya da yakınlarınla uyumlu bir an yaratmaya özen göster.'],
+      ['duygusal haber, hassasiyet, sezgisel mesaj', 'Kupasından beklenmedik bir mesaj çıkaran hayalperest genç.', 'Bugün sezgisel mesajlara ve içten gelen duygulara açık ol.'],
+      ['romantizm, teklif, zarafet', 'Kalbinin peşinden giden zarif şövalye.', 'Bugün duygularını ifade etmek ya da bir davet sunmak için güzel bir gün.'],
+      ['şefkat, sezgi, duygusal olgunluk', 'Başkalarının duygularını derinden anlayan şefkatli kraliçe.', 'Bugün şefkatini göster ama kendi duygusal sınırlarını da koru.'],
+      ['duygusal denge, bilgelik, sakinlik', 'Fırtınalı denizde bile dengesini koruyan bilge.', 'Bugün duygularına hâkim ol; sakinliğin çevrene de huzur verecek.']
+    ],
+    [ // Kılıçlar
+      ['netlik, gerçek, zihinsel atılım', 'Sisi yaran keskin bir fikir ya da gerçek.', 'Bugün bir konuda netleşmeye cesaret et; doğruyu açıkça söyle.'],
+      ['ikilem, kararsızlık, ateşkes', 'Gözleri bağlı iki seçenek arasında durmak.', 'Bugün kaçındığın kararı ertelemek yerine bilgilerini topla ve seç.'],
+      ['kalp kırıklığı, acı, gerçeklerle yüzleşme', 'Acı verse de iyileşmenin başladığı gerçek.', 'Bugün kırgınlığını bastırma; hisset ve bırakmaya başla.'],
+      ['dinlenme, iyileşme, geri çekilme', 'Savaştan sonra gelen gerekli sessizlik.', 'Bugün kendine dinlenme izni ver; zihnin şarj olmak istiyor.'],
+      ['çatışma, ego, kazanırken kaybetmek', 'Haklı çıkmak uğruna ilişkileri feda etmek.', 'Bugün tartışmada kazanmak mı, ilişkiyi korumak mı daha önemli, karar ver.'],
+      ['geçiş, uzaklaşma, sakin sulara gidiş', 'Zor bir dönemden daha sakin bir yere yolculuk.', 'Bugün geride bırakman gerekenle barış ve yoluna devam et.'],
+      ['strateji, gizlilik, kurnazlık', 'Planlarını gizli tutan ya da kestirme yol arayan zekâ.', 'Bugün stratejik düşün ama dürüstlükten ödün verme.'],
+      ['kısıtlanma, zihinsel tuzak, çaresizlik hissi', 'Gözlerini açsa çıkabileceği bir kafeste beklemek.', 'Bugün seni kısıtlayan düşünceyi sorgula; sandığından daha özgürsün.'],
+      ['kaygı, uykusuzluk, endişe', 'Gecenin içinde büyüyen korkular.', 'Bugün kaygılarını yazıya dök; kâğıtta göründüklerinden çok daha küçükler.'],
+      ['bitiş, dip noktası, yeni şafak', 'Daha kötüsü olamayacak bir son; ama ufukta şafak var.', 'Bugün bir şeyin bittiğini kabul et; dipten sonra yükseliş başlar.'],
+      ['merak, gözlem, yeni fikirler', 'Her şeyi sorgulayan uyanık zihin.', 'Bugün soru sor, araştır ve yeni bilgilere açık ol.'],
+      ['hızlı eylem, kararlılık, aceleci düşünce', 'Fikrinin arkasından dörtnala koşan şövalye.', 'Bugün hızlı ol ama söyleyeceklerini bir kez tart.'],
+      ['dürüstlük, bağımsızlık, net sınırlar', 'Deneyimlerinden bilgelik çıkaran açık sözlü kraliçe.', 'Bugün sınırlarını açık ve nazik bir dille koy.'],
+      ['otorite, mantık, adil karar', 'Aklın ve hakikatin yanında duran kral.', 'Bugün kararlarını duygulardan çok mantıkla ve adaletle ver.']
+    ],
+    [ // Tılsımlar
+      ['yeni fırsat, maddi başlangıç, bolluk tohumu', 'Elinde somut bir fırsat: yeni bir iş, kazanç ya da sağlık başlangıcı.', 'Bugün somut bir fırsatı değerlendir; küçük bir yatırım büyüyebilir.'],
+      ['denge, esneklik, çoklu görevler', 'Birden çok sorumluluğu ustalıkla döndürmek.', 'Bugün önceliklerini belirle; her şeyi aynı anda yapmaya çalışma.'],
+      ['iş birliği, ustalık, ekip çalışması', 'Becerilerin bir araya gelerek kalıcı bir eser yaratması.', 'Bugün işbirliği yap; uzmanlığın başkalarıyla birleşince değer kazanır.'],
+      ['tutumluluk, güvence, sahiplenme', 'Sahip olduklarını sıkıca tutmak.', 'Bugün birikim yap ama korkudan değil, bilinçten tutumlu ol.'],
+      ['yoksunluk, endişe, dışlanmışlık', 'Soğukta yardım ararken yakındaki ışığı görmemek.', 'Bugün destek iste; yalnız olmadığını hatırla.'],
+      ['cömertlik, paylaşım, denge', 'Vermek ve almak arasındaki adil akış.', 'Bugün yardım et ya da yardım kabul et; bolluk paylaştıkça artar.'],
+      ['sabır, yatırım, değerlendirme', 'Ektiklerinin büyümesini beklerken durup bakmak.', 'Bugün emeğinin sonuçlarını değerlendir; bazı şeyler zaman ister.'],
+      ['ustalık, çalışkanlık, beceri geliştirme', 'Zanaatını sabırla ilerleten usta.', 'Bugün bir beceriye odaklan; tekrar ustalığın anahtarıdır.'],
+      ['bağımsızlık, refah, kendi kendine yetme', 'Emeğiyle kurduğu bahçede huzurla dolaşan kişi.', 'Bugün kazandıklarının tadını çıkar ve kendi başarına saygı duy.'],
+      ['miras, aile, kalıcı zenginlik', 'Kuşaktan kuşağa aktarılan güvence ve refah.', 'Bugün uzun vadeli güvenliğini ve aileni düşünerek karar ver.'],
+      ['öğrenme, hedef, pratik başlangıç', 'Yeni bir beceriyi ya da işi ciddiyetle öğrenen genç.', 'Bugün yeni bir şeyi öğrenmeye zaman ayır; pratik adımlar at.'],
+      ['istikrar, rutin, güvenilirlik', 'Yavaş ama hiç durmadan ilerleyen şövalye.', 'Bugün istikrarlı ol; sıkıcı görünen rutin seni hedefe taşıyor.'],
+      ['bereket, pratik şefkat, ev', 'Evini ve sevdiklerini somut olarak besleyen kraliçe.', 'Bugün evine, bedenine ve sevdiklerine pratik bir özen göster.'],
+      ['başarı, güvence, bolluk', 'Emekle kurulan sağlam ve bereketli bir düzen.', 'Bugün sorumluluklarını sahiplen; sağlam adımların bolluğu getiriyor.']
+    ]
+  ]
+};

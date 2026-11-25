@@ -41,6 +41,21 @@ var AM = (function () {
   }
 
   /* ---------- Biçimlendirme ---------- */
+  const LOC = ['Koç’ta', 'Boğa’da', 'İkizler’de', 'Yengeç’te', 'Aslan’da', 'Başak’ta', 'Terazi’de', 'Akrep’te', 'Yay’da', 'Oğlak’ta', 'Kova’da', 'Balık’ta']; // bulunma hâli ekleri
+  // Türkçe ekler (ünlü uyumu ve kaynaştırma harfleriyle): gen = -ın/-nin, poss = -ı/-sı, dat = -a/-ya, loc = -da/-ta
+  function ek(w, kind) {
+    w = String(w || ''); const par = (w.match(/\s*\([^)]*\)$/) || [''])[0], base = w.slice(0, w.length - par.length);
+    if ((kind === 'poss' || kind === 'acc') && /\s/.test(base) && /[ıiuü]$/.test(base)) return w; // "Kuzey Ay Düğümü", "Tepe Noktası" zaten iyelikli
+    if (par) return ek(base, kind) + par;
+    const low = w.toLocaleLowerCase('tr-TR'), vs = low.match(/[aıoueiöü]/g), v = vs ? vs[vs.length - 1] : 'e', last = low.slice(-1), endsV = /[aıoueiöü]/.test(last);
+    const I = { a: 'ı', ı: 'ı', o: 'u', u: 'u', e: 'i', i: 'i', ö: 'ü', ü: 'ü' }[v], Aa = 'aıou'.includes(v) ? 'a' : 'e';
+    if (kind === 'gen') return w + '’' + (endsV ? 'n' : '') + I + 'n';
+    if (kind === 'poss') return w + '’' + (endsV ? 's' : '') + I;
+    if (kind === 'acc') return w + '’' + (endsV ? 'y' : '') + I;
+    if (kind === 'dat') return w + '’' + (endsV ? 'y' : '') + Aa;
+    if (kind === 'loc') return w + '’' + ('fstkçşhp'.includes(last) ? 't' : 'd') + Aa;
+    return w;
+  }
   const SG = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'].map(x => x + '︎');
   const ELC = ['var(--fire)', 'var(--earth)', 'var(--air)', 'var(--water)'];
   const P = id => TX.P[id] || { n: id, g: id };
@@ -213,10 +228,10 @@ var AM = (function () {
     if (id === 'Asc') return TX.ASC[sg];
     if (id === 'MC') return TX.MC[sg];
     if (id === 'NNode') return TX.NODE[sg];
-    if (TX.SIGNTXT[id] && ['Mercury', 'Venus', 'Mars'].includes(id)) return `${nm(id)} ${A.SIGNS[sg]}’da: ${TX.SIGNTXT[id][sg]}`;
+    if (TX.SIGNTXT[id] && ['Mercury', 'Venus', 'Mars'].includes(id)) return `${nm(id)} ${LOC[sg]}: ${TX.SIGNTXT[id][sg]}`;
     if (TX.SIGNTXT[id] && ['Jupiter', 'Saturn'].includes(id)) return TX.SIGNTXT[id][sg];
     if (['Uranus', 'Neptune', 'Pluto'].includes(id)) return `${TX.OUTERSIGN[id][sg]} Bu yerleşimi tüm kuşağınızla paylaşırsınız; sizin için kişisel anlamı, bulunduğu ev ve kişisel gezegenlerle yaptığı açılar üzerinden belirginleşir.`;
-    const p = P(id); return `${p.n} ${A.SIGNS[sg]}’da: ${p.f} ${A.SIGNS[sg]} burcunda bu tema ${TX.S[sg].st} yaşanır.`;
+    const p = P(id); return `${p.n} ${LOC[sg]}: ${p.f} ${A.SIGNS[sg]} burcunda bu tema ${TX.S[sg].st} yaşanır.`;
   }
   function houseText(id, h) {
     if (TX.HOUSETXT[id]) return `${nm(id)} ${h}. evde (${TX.H[h].t}): ${TX.HOUSETXT[id][h - 1]}`;
@@ -247,5 +262,5 @@ var AM = (function () {
   function rulerOf(sign, modern) { return modern ? A.MODERN[sign] : A.RULER[sign]; }
 
   const paras = t => String(t || '').split('\n\n').map(x => `<p>${esc(x)}</p>`).join('');
-  return { paras, A, B, S, $, esc, save, toast, calcSettings, SG, ELC, P, nm, gl, dms, fmtLon, fmtLonTxt, fmtDate, fmtShort, fmtTime, nowJD, ASPN, aspClass, ASPG, inputOf, chartOf, person, activeP, pointsFor, aspectsOf, wheel, moonPhaseSVG, moonDefs, signText, houseText, aspectText, rulerOf, CORE, DEVICE_TZ, pad, store, cache };
+  return { ek, LOC, paras, A, B, S, $, esc, save, toast, calcSettings, SG, ELC, P, nm, gl, dms, fmtLon, fmtLonTxt, fmtDate, fmtShort, fmtTime, nowJD, ASPN, aspClass, ASPG, inputOf, chartOf, person, activeP, pointsFor, aspectsOf, wheel, moonPhaseSVG, moonDefs, signText, houseText, aspectText, rulerOf, CORE, DEVICE_TZ, pad, store, cache };
 })();

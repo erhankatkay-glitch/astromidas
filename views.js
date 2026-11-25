@@ -17,7 +17,7 @@
     defter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"><path d="M7 3h11a2 2 0 0 1 2 2v1H9"/><path d="M7 3a2 2 0 0 0-2 2v14a2 2 0 0 1-2 2h12a2 2 0 0 0 2-2V6"/><path d="M9 9h6M9 12.5h6M9 16h4"/></svg>'
   };
   const TABS = [['an', 'An'], ['harita', 'Harita'], ['rezonans', 'Rezonans'], ['donguler', 'Döngüler'], ['defter', 'Defter']];
-  function drawTabs() { $('#tabs').innerHTML = TABS.map(([k, t]) => `<button data-tab="${k}" class="${S.tab === k ? 'on' : ''}" aria-label="${t}">${ICON[k]}<span>${t}</span></button>`).join(''); }
+  function drawTabs() { $('#tabs').innerHTML = TABS.map(([k, t]) => `<button data-tab="${k}" class="${S.tab === k || (k === 'an' && S.tab === 'gunluk') ? 'on' : ''}" aria-label="${t}">${ICON[k]}<span>${t}</span></button>`).join(''); }
   $('#tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (!b) return; S.tab = b.dataset.tab; location.hash = S.tab; render(); window.scrollTo(0, 0); });
 
   function medallion(ph) { // gümüş Ay madalyonu, gerçek evreyle
@@ -29,7 +29,7 @@
     const d = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', timeZone: DEVICE_TZ }).format(new Date());
     const sd = Math.floor(A.norm(sun.lon) % 30), md = Math.floor(A.norm(moon.lon) % 30);
     return `<header class="top"><div class="brand">${LOGO}<div><b>AstroMidas</b><small>Ay ışığı &amp; kozmik rehber</small></div></div>
-      <div class="today"><div>${esc(d)} · Ay ${A.SIGNS[ms]}’da ${sym(SG[ms])}</div><div>${sym('☉\uFE0E')} ${pad(sd)}° ${sym(SG[A.signOf(sun.lon)])} · ${sym('☽\uFE0E')} ${pad(md)}° ${sym(SG[ms])}</div></div><img class="medal" src="medal.png" alt="" width="33" height="33"></header>`;
+      <div class="today"><div>${esc(d)} · Ay ${AM.LOC[ms]} ${sym(SG[ms])}</div><div>${sym('☉\uFE0E')} ${pad(sd)}° ${sym(SG[A.signOf(sun.lon)])} · ${sym('☽\uFE0E')} ${pad(md)}° ${sym(SG[ms])}</div></div><img class="medal" src="medal.png" alt="" width="33" height="33"></header>`;
   }
   function subnav(key, items) {
     const cur = S.sub[key] || items[0][0];
@@ -139,6 +139,7 @@
     }
     const orbIcon = `<svg class="ic-orb" width="96" height="60" viewBox="0 0 96 60" fill="none"><ellipse cx="48" cy="30" rx="40" ry="16" transform="rotate(-18 48 30)" stroke="#dfe6f4" stroke-opacity=".8"/><circle cx="40" cy="32" r="11" fill="url(#ic1)"/><circle cx="58" cy="28" r="8" fill="#c9d1e0" opacity=".85"/><circle cx="84" cy="14" r="3.5" fill="#fff"/><circle cx="12" cy="46" r="3" fill="#fff" opacity=".8"/><defs><radialGradient id="ic1" cx="40%" cy="35%"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#8f9ab0"/></radialGradient></defs></svg>`;
     const lineIcon = `<svg class="ic-line" width="120" height="44" viewBox="0 0 120 44" fill="none"><path d="M4 30h108" stroke="#dfe6f4" stroke-opacity=".8"/><path d="M108 26l6 4-6 4" stroke="#dfe6f4"/><circle cx="22" cy="30" r="2.5" fill="#cfd6e4"/><circle cx="44" cy="30" r="3" fill="#dfe6f4"/><circle cx="68" cy="30" r="6" fill="url(#ic1)"/><circle cx="90" cy="30" r="3" fill="#dfe6f4"/><text x="96" y="14" font-size="17" fill="#e8edf6" class="sym">♂︎</text></svg>`;
+    const starIcon = `<svg class="ic-orb" width="96" height="60" viewBox="0 0 96 60" fill="none"><rect x="54" y="8" width="30" height="44" rx="4" stroke="#dfe6f4" stroke-opacity=".85" transform="rotate(10 69 30)"/><path d="M69 18 L72 27 L81 30 L72 33 L69 42 L66 33 L57 30 L66 27Z" fill="#eef2fa" transform="rotate(10 69 30)"/><path d="M22 18 l2 6 l6 2 l-6 2 l-2 6 l-2 -6 l-6 -2 l6 -2Z M38 38 l1.4 4 l4 1.4 l-4 1.4 l-1.4 4 l-1.4 -4 l-4 -1.4 l4 -1.4Z" fill="#dfe6f4"/></svg>`;
     const wheelIcon = `<svg width="92" height="92" viewBox="0 0 92 92" fill="none" stroke="#dfe6f4" stroke-opacity=".85"><circle cx="46" cy="46" r="42"/><circle cx="46" cy="46" r="30"/><circle cx="46" cy="46" r="14"/>${Array.from({ length: 12 }, (_, i) => { const a = i * Math.PI / 6; return `<line x1="${(46 + 14 * Math.cos(a)).toFixed(1)}" y1="${(46 + 14 * Math.sin(a)).toFixed(1)}" x2="${(46 + 42 * Math.cos(a)).toFixed(1)}" y2="${(46 + 42 * Math.sin(a)).toFixed(1)}" stroke-opacity=".5"/>`; }).join('')}${[0, 2, 4, 7, 9].map(i => { const a = (i * 30 + 15) * Math.PI / 180; return `<text x="${(46 + 36 * Math.cos(a)).toFixed(1)}" y="${(46 + 36 * Math.sin(a)).toFixed(1)}" font-size="8" fill="#dfe6f4" stroke="none" text-anchor="middle" dominant-baseline="central" class="sym">${SG[i]}</text>`; }).join('')}</svg>`;
     return `<div class="an">${header()}
       <h3 class="eyebrow">Anın Göksel Dokusu</h3>
@@ -148,7 +149,8 @@
       <div class="gauges">${gauge('Ay Işığı', illum, 'Aydınlanma')}${gauge('Ay Döngüsü', cyc, TX.PHASE[phi][0])}${tint != null ? gauge('Transit Yoğunluğu', tint, ap.name.split(' ')[0]) : gauge('Gezegen Saati', hp, hour ? nm(hour.ruler) + ' saati' : '—')}</div>
       <button class="card navcard big" data-go="harita">${wheelIcon}<div><h3>Doğum Haritanız: Ay Işığı Aynası</h3><div class="muted small">Ruhunuzun ve göksel haritanızın gümüş yansıması</div><div class="go">Aydınlığa Yol Al →</div></div></button>
       <button class="card navcard" data-go="rezonans"><div style="flex:1"><h3>Kozmik Uyum &amp; Gümüş Rezonans</h3><div class="muted small">İki ruhun kozmik ve duygusal uyumu</div></div>${orbIcon}</button>
-      <button class="card navcard" data-go="donguler"><div style="flex:1"><h3>Zamanın Ritmi &amp; Ay Döngüleri</h3><div class="muted small">Hilal’den Dolunay’a · ${voc ? 'Ay şu an boşlukta' : 'Ay ' + A.SIGNS[moon.sign] + '’da'} · ${hour ? nm(hour.ruler) + ' saati' : ''}</div></div>${lineIcon}</button></div>
+      <button class="card navcard" data-go="donguler"><div style="flex:1"><h3>Zamanın Ritmi &amp; Ay Döngüleri</h3><div class="muted small">Hilal’den Dolunay’a · ${voc ? 'Ay şu an boşlukta' : 'Ay ' + AM.LOC[moon.sign]} · ${hour ? nm(hour.ruler) + ' saati' : ''}</div></div>${lineIcon}</button>
+      <button class="card navcard" data-go="gunluk"><div style="flex:1"><h3>Günün Rehberi &amp; Burç Yorumları</h3><div class="muted small">Kozmik mesaj, manifest, tarot ve 12 burç</div></div>${starIcon}</button></div>
       ${mine}`;
   }
   /* ---------- Kişi formu ---------- */
@@ -582,7 +584,7 @@
       const use = pats.filter(o => !(o.t === 'T-Kare' && gc.length && o.ids.every(i => gcSet.has(i))));
       const txt = use.slice(0, 4).map(o => {
         if (o.t === 'T-Kare') { const ap = c.get(o.apex), opp = o.ids.filter(i => i !== o.apex); const es = (ap.sign + 6) % 12, eh = (ap.house + 5) % 12 + 1; return `T-Kare: ${nm(opp[0])}–${nm(opp[1])} karşıtlığının gerilimi odak gezegen ${nm(o.apex)} üzerinde toplanır. ${nm(o.apex)} ${A.SIGNS[ap.sign]} burcunda ve ${ap.house}. evde olduğundan, ${TX.H[ap.house].t} alanı hayatınızda sürekli çalıştığınız, zorlandığınız ve sonunda ustalaştığınız yerdir. Klasik çözüm, “boş bacağı”, yani ${A.SIGNS[es]} burcunun ve ${eh}. evin (${TX.H[eh].t}) niteliklerini bilinçle geliştirmektir.`; }
-        if (o.t === 'Yod') { const ap = c.get(o.apex); return `Yod: ${o.ids.filter(i => i !== o.apex).map(nm).join(' ve ')} uyumlu biçimde bağlanır ve ikisi de ${nm(o.apex)}’e quincunx açı yapar. Tepe gezegen ${nm(o.apex)}, ${ap.house}. evde (${TX.H[ap.house].t}), hayatınızda sürekli ayar gerektiren, kader duygusu taşıyan özel bir görev alanını işaret eder.`; }
+        if (o.t === 'Yod') { const ap = c.get(o.apex); return `Yod: ${o.ids.filter(i => i !== o.apex).map(nm).join(' ve ')} uyumlu biçimde bağlanır ve ikisi de ${AM.ek(nm(o.apex), 'dat')} quincunx açı yapar. Tepe gezegen ${nm(o.apex)}, ${ap.house}. evde (${TX.H[ap.house].t}), hayatınızda sürekli ayar gerektiren, kader duygusu taşıyan özel bir görev alanını işaret eder.`; }
         if (o.t === 'Büyük Haç') return `Büyük Haç (${o.ids.map(nm).join(', ')}): dört yönlü bir gerilim yapısı. Hayatınızın birden çok alanı aynı anda dikkat ister; bu yük, zamanla olağanüstü bir dayanıklılık ve çok yönlülük kazandırır. Dengenin anahtarı, tek bir alanı diğerlerinin önüne geçirmemektir.`;
         if (o.t === 'Büyük Üçgen') return `${o.el || ''} Büyük Üçgeni (${o.ids.map(nm).join(', ')}): bu elementte doğal, akıcı bir yetenek akışı vardır. Ancak kapalı bir devre olduğu için kendi kendine yeterli kalabilir; bilinçli bir hedefe bağlandığında hayatınızın en büyük kaynağına dönüşür.`;
         if (o.t === 'Stelyum') return `Stelyum (${o.ids.map(nm).join(', ')}, ${o.where}): bu yoğunlaşma, hayatınızda bu ${o.where.includes('ev') ? 'alanın' : 'burcun niteliklerinin'} olağanüstü baskın olduğunu gösterir; enerjinizin büyük bölümü buraya akar.`;
@@ -652,7 +654,7 @@
     const k = x.asp.k, soft = k === 'tri' || k === 'sex', hard = k === 'squ' || k === 'opp' || k === 'qcx';
     const t = TX.SYN[x.p.id + '-' + x.q.id] || TX.SYN[x.q.id + '-' + x.p.id];
     const ra = TX.SYNROLE[x.p.id] || P(x.p.id).k, rb = TX.SYNROLE[x.q.id] || P(x.q.id).k;
-    let s = `${an}’ın ${nm(x.p.id)}’i (${ra}) ile ${bn}’ın ${nm(x.q.id)}’i (${rb}) ${x.asp.n.toLowerCase()} yapar (orb ${dms(x.orb)}). `;
+    let s = `${AM.ek(an, 'gen')} ${AM.ek(nm(x.p.id), 'poss')} (${ra}) ile ${AM.ek(bn, 'gen')} ${AM.ek(nm(x.q.id), 'poss')} (${rb}) ${x.asp.n.toLowerCase()} yapar (orb ${dms(x.orb)}). `;
     s += t ? (k === 'con' ? t[0] : soft ? t[1] : hard ? t[2] : t[1]) : (soft || k === 'con' ? `Bu iki alan birbirini destekler; ${an} ve ${bn} bu konularda kolayca uyum yakalar.` : `Bu iki alan arasında sürtüşme vardır; farkındalıkla büyütücü bir dinamiğe dönüşür.`);
     return s;
   }
@@ -664,7 +666,7 @@
     const el = (c, id) => c.get(id).sign % 4;
     out += pageWrap('Özet', ++n, `<p>İki harita arasında ${ia.length} majör açı var: ${soft} uyumlu, ${hard} zorlayıcı, ${con} kavuşum. ${soft > hard ? 'Uyumlu bağların ağırlığı, birlikteliğin doğal bir akış ve kolaylık taşıdığını gösterir.' : hard > soft ? 'Gerilimli bağların ağırlığı yoğun bir çekim ve karşılıklı büyüme getirir; iletişim ve sabır anahtardır.' : 'Uyum ile gerilim dengede; ilişki hem rahatlatıcı hem de geliştiricidir.'}</p><p>Ay’lar ${el(ca, 'Moon') === el(cb, 'Moon') ? 'aynı elementte: duygusal dilleriniz benzer.' : 'farklı elementlerde: birbirinizin duygusal ihtiyaçlarını öğrenmek zaman alır.'} Venüs–Mars bağları: ${ia.filter(x => (x.p.id === 'Venus' && x.q.id === 'Mars') || (x.p.id === 'Mars' && x.q.id === 'Venus')).map(x => x.asp.n.toLowerCase()).join(', ') || 'doğrudan majör açı yok'}.</p><h3>Anahtar temaslar</h3>${key.map(x => `<p><span class="${aspClass(x.asp.k)}">${G(x.p.id)} ${ASPG[x.asp.k]} ${G(x.q.id)}</span> ${esc(synText(x, a.name, b.name))}</p>`).join('') || '<p class="muted">Kişisel noktalar arasında majör temas yok.</p>'}`);
     out += pageWrap('Tüm karşılıklı açılar', ++n, ia.map(x => `<p><span class="${aspClass(x.asp.k)}">${G(x.p.id)} ${ASPG[x.asp.k]} ${G(x.q.id)}</span> ${esc(synText(x, a.name, b.name))}</p>`).join(''));
-    const ov = (c1, c2, n1, n2) => c2.unknownTime ? `<p class="muted">${esc(n2)} için doğum saati bilinmediğinden ev yerleşimleri hesaplanamaz.</p>` : B.overlays(c1, c2).filter(o => CORE.includes(o.id)).map(o => `<p><b>${esc(n1)}’ın ${nm(o.id)}’i, ${esc(n2)}’ın ${o.house}. evinde:</b> ${esc(n1)}, ${esc(n2)}’ın ${TX.H[o.house].t} alanını ${P(o.id).k.split(',')[0]} temasıyla etkiler.</p>`).join('');
+    const ov = (c1, c2, n1, n2) => c2.unknownTime ? `<p class="muted">${esc(n2)} için doğum saati bilinmediğinden ev yerleşimleri hesaplanamaz.</p>` : B.overlays(c1, c2).filter(o => CORE.includes(o.id)).map(o => `<p><b>${esc(AM.ek(n1, 'gen'))} ${AM.ek(nm(o.id), 'poss')}, ${esc(AM.ek(n2, 'gen'))} ${o.house}. evinde:</b> ${esc(n1)}, ${esc(n2)}’ın ${TX.H[o.house].t} alanını ${P(o.id).k.split(',')[0]} temasıyla etkiler.</p>`).join('');
     out += pageWrap('Ev yerleşimleri', ++n, ov(cb, ca, b.name, a.name) + ov(ca, cb, a.name, b.name));
     out += pageWrap('Kompozit harita', ++n, `<div class="wheelbox" style="max-width:440px">${wheel(k, { uid: 'kc' + (uidN++), points: pointsFor(k), aspects: aspectsOf(k).filter(x => x.asp.major) })}</div><p>İlişkinin kendisinin haritası: kompozit Güneş ${A.SIGNS[k.get('Sun').sign]}, ${k.get('Sun').house}. evde — ilişkinin amacı ${TX.H[k.get('Sun').house].t} alanında parlar. Kompozit Ay ${A.SIGNS[k.get('Moon').sign]}: birlikteyken duygusal ihtiyaçlarınız ${TX.S[k.get('Moon').sign].st} karşılanır. Kompozit Venüs ${k.get('Venus').house}. evde: sevgi en çok ${TX.H[k.get('Venus').house].t} alanında ifade bulur.</p>`);
     return out;
@@ -751,7 +753,7 @@
     app.className = 'app tab-' + (S.report ? 'rapor' : S.tab);
     try {
       if (S.report) app.innerHTML = viewReport();
-      else app.innerHTML = ({ an: viewAn, harita: viewHarita, rezonans: viewRezonans, donguler: viewDonguler, defter: viewDefter }[S.tab] || viewAn)();
+      else app.innerHTML = ({ an: viewAn, harita: viewHarita, rezonans: viewRezonans, donguler: viewDonguler, defter: viewDefter, gunluk: () => header() + (window.DAILY ? DAILY.view() : '') }[S.tab] || viewAn)();
     } catch (e) { console.error(e); app.innerHTML = header() + `<div class="card"><p>Bir hesap hatası oluştu: ${esc(e.message)}</p><button class="btn" data-go="defter">Defter</button></div>`; }
     if ($('#f_date')) { formInfo(); }
   }
