@@ -772,6 +772,18 @@
       else app.innerHTML = ({ an: viewAn, harita: viewHarita, rezonans: viewRezonans, donguler: viewDonguler, defter: viewDefter, gunluk: () => header() + (window.DAILY ? DAILY.view() : '') }[S.tab] || viewAn)();
     } catch (e) { console.error(e); app.innerHTML = header() + `<div class="card"><p>Bir hesap hatası oluştu: ${esc(e.message)}</p><button class="btn" data-go="defter">Defter</button></div>`; }
     if ($('#f_date')) { formInfo(); }
+    if (!S.report && S.tab !== 'an' && S.tab !== 'gunluk') cardify(app);
+  }
+  // Yeni stil: her başlık (h2) ve altındaki içerik bir cam karta toplanır
+  function cardify(root) {
+    const kids = Array.from(root.children); let box = null;
+    for (const el of kids) {
+      if (el.tagName === 'H2' || el.tagName === 'H3') { box = document.createElement('section'); box.className = 'gsec'; root.insertBefore(box, el); box.appendChild(el); continue; }
+      if (!box) { if (el.matches('.list,.scroll,table,details,.sgrid')) { const b2 = document.createElement('section'); b2.className = 'gsec'; root.insertBefore(b2, el); b2.appendChild(el); } continue; }
+      if (el.matches('header.top,.sub,.dnav')) { box = null; continue; }
+      if (el.classList.contains('card') && !el.classList.contains('navcard')) { el.classList.add('incard'); }
+      box.appendChild(el);
+    }
   }
   window.render = render;
 
