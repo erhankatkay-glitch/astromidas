@@ -73,34 +73,50 @@
     const R_OUT = 236, R_SIGN_O = 144, R_SIGN_I = 95, R_MOON = 75;
     let s = `<svg viewBox="0 0 ${W} ${W}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Anın göksel dokusu: Ay ${A.SIGNS[moon.sign]} burcunda">
     <defs><radialGradient id="mG" cx="40%" cy="36%" r="66%"><stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#e2e6ee"/><stop offset=".85" stop-color="#b9c1d0"/><stop offset="1" stop-color="#8e98ad"/></radialGradient>
-    <radialGradient id="mH" cx="50%" cy="50%" r="50%"><stop offset=".45" stop-color="#eef3ff" stop-opacity=".55"/><stop offset=".7" stop-color="#b9cbf5" stop-opacity=".18"/><stop offset="1" stop-color="#b9cbf5" stop-opacity="0"/></radialGradient>
-    <filter id="mT" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="5" seed="12"/><feColorMatrix type="matrix" values="0 0 0 0 .42 0 0 0 0 .46 0 0 0 0 .55 0 0 0 -2.4 1.45"/><feComposite in2="SourceGraphic" operator="in"/></filter>
-    <filter id="cr" x="0" y="0" width="100%" height="100%"><feTurbulence type="turbulence" baseFrequency=".13" numOctaves="2" seed="3"/><feColorMatrix type="matrix" values="0 0 0 0 .9 0 0 0 0 .92 0 0 0 0 .96 0 0 0 -6 2.6"/><feComposite in2="SourceGraphic" operator="in"/></filter>
-    <filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter><filter id="sb"><feGaussianBlur stdDeviation="5"/></filter><clipPath id="mC"><circle cx="${cx}" cy="${cy}" r="${R_MOON}"/></clipPath></defs>`;
-    const ln = 'rgba(232,238,250,.62)';
-    s += `<circle cx="${cx}" cy="${cy}" r="290" fill="url(#mH)" opacity=".35"/>`;
-    const spark = (x, y, r, o) => `<g opacity="${o}"><circle cx="${x}" cy="${y}" r="${r * 2.2}" fill="#dfe8ff" opacity=".35" filter="url(#gl)"/><path d="M${x} ${y - r * 3} L${x + r * .35} ${y - r * .35} L${x + r * 3} ${y} L${x + r * .35} ${y + r * .35} L${x} ${y + r * 3} L${x - r * .35} ${y + r * .35} L${x - r * 3} ${y} L${x - r * .35} ${y - r * .35}Z" fill="#fff"/></g>`;
-    s += spark(46, 70, 2.2, .9) + spark(560, 40, 2.6, .95) + spark(574, 520, 1.8, .8) + spark(30, 470, 1.6, .7) + spark(500, 110, 1.4, .7) + spark(96, 560, 1.4, .6);
-    s += `<g fill="none" stroke="${ln}" stroke-width="1"><circle cx="${cx}" cy="${cy}" r="292" stroke="rgba(230,236,250,.22)"/><circle cx="${cx}" cy="${cy}" r="${R_OUT}" stroke-width="1.3" stroke="rgba(230,236,250,.55)"/><circle cx="${cx}" cy="${cy}" r="${R_OUT - 7}" stroke-opacity=".5" stroke-dasharray="1.2 3.2"/><circle cx="${cx}" cy="${cy}" r="${R_SIGN_O}" stroke="rgba(230,236,250,.55)"/><circle cx="${cx}" cy="${cy}" r="${R_SIGN_I}"/></g>`;
-    for (const d of [0, 90, 180, 270]) { const a = d * Math.PI / 180; s += `<line x1="${f1(cx + (R_SIGN_I) * Math.sin(a))}" y1="${f1(cy - (R_SIGN_I) * Math.cos(a))}" x2="${f1(cx + 292 * Math.sin(a))}" y2="${f1(cy - 292 * Math.cos(a))}" stroke="${ln}"/>`; }
-    for (let d = 0; d < 360; d += 30) { if (d >= 150 && d <= 210) continue; const a = d * Math.PI / 180, rr = 254; s += `<text x="${f1(cx + rr * Math.sin(a))}" y="${f1(cy - rr * Math.cos(a))}" font-size="14.5" fill="rgba(232,238,250,.92)" text-anchor="middle" dominant-baseline="central" font-family="Manrope,system-ui,sans-serif">${d}°</text>`; }
+    <radialGradient id="mBloom" cx="50%" cy="50%" r="50%"><stop offset=".30" stop-color="#ffffff" stop-opacity=".95"/><stop offset=".42" stop-color="#e8efff" stop-opacity=".55"/><stop offset=".62" stop-color="#c6d4f4" stop-opacity=".22"/><stop offset="1" stop-color="#9fb4e6" stop-opacity="0"/></radialGradient>
+    <radialGradient id="wFill" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#9fb5e0" stop-opacity=".30"/><stop offset=".55" stop-color="#7e95c4" stop-opacity=".14"/><stop offset="1" stop-color="#5b6f9c" stop-opacity="0"/></radialGradient>
+    <linearGradient id="ray" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#eef3ff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+    <filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter><filter id="gl2" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4.5"/></filter><filter id="sb"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="lineGlow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <clipPath id="mC"><circle cx="${cx}" cy="${cy}" r="${R_MOON}"/></clipPath></defs>`;
+    const ln = 'rgba(236,241,252,.72)', ln2 = 'rgba(236,241,252,.42)';
+    // çarkın arkasındaki ay ışığı dolgusu
+    s += `<circle cx="${cx}" cy="${cy}" r="${R_OUT + 10}" fill="url(#wFill)"/>`;
+    // köşegen ışık huzmeleri (referanstaki gibi sağ üstten ve sol alttan)
+    const rays = [[118, 270, 600, -24, 1.1, .55], [100, 300, 600, -24, .8, .4], [140, 290, 560, -20, .7, .32], [-90, 120, 330, 160, .8, .38], [-60, 150, 300, 162, .6, .28]];
+    s += `<g class="rays" filter="url(#lineGlow)">${rays.map(([x, y, w, rot, sw, op]) => `<rect x="${x}" y="${y}" width="${w}" height="${sw}" fill="url(#ray)" opacity="${op}" transform="rotate(${rot} ${x + w / 2} ${y})"/>`).join('')}</g>`;
+    const spark = (x, y, r, o, k) => `<g class="spk spk${k}" opacity="${o}"><circle cx="${x}" cy="${y}" r="${r * 3.2}" fill="#dfe8ff" opacity=".45" filter="url(#gl)"/><path d="M${x} ${y - r * 3.4} L${x + r * .35} ${y - r * .35} L${x + r * 3.4} ${y} L${x + r * .35} ${y + r * .35} L${x} ${y + r * 3.4} L${x - r * .35} ${y + r * .35} L${x - r * 3.4} ${y} L${x - r * .35} ${y - r * .35}Z" fill="#fff"/></g>`;
+    s += spark(46, 70, 2.4, .95, 1) + spark(560, 40, 2.8, 1, 2) + spark(574, 520, 1.9, .85, 3) + spark(30, 470, 1.7, .8, 1) + spark(500, 110, 1.5, .8, 2) + spark(96, 560, 1.5, .7, 3) + spark(70, 330, 1.2, .7, 2);
+    s += `<g fill="none" stroke="${ln}" stroke-width="1.1" filter="url(#lineGlow)">
+      <circle cx="${cx}" cy="${cy}" r="292" stroke="${ln2}" stroke-width=".8"/>
+      <circle cx="${cx}" cy="${cy}" r="${R_OUT}" stroke-width="1.6" stroke="rgba(240,244,253,.82)"/><circle cx="${cx}" cy="${cy}" r="${R_OUT - 6}" stroke="${ln2}"/>
+      <circle cx="${cx}" cy="${cy}" r="${R_SIGN_O + 4}" stroke="rgba(240,244,253,.8)" stroke-width="1.4"/><circle cx="${cx}" cy="${cy}" r="${R_SIGN_O - 3}" stroke="${ln2}"/>
+      <circle cx="${cx}" cy="${cy}" r="${R_SIGN_I}" stroke="rgba(240,244,253,.78)" stroke-width="1.3"/><circle cx="${cx}" cy="${cy}" r="${R_SIGN_I + 5}" stroke="${ln2}"/></g>`;
+    // derece çentikleri (işaret halkasının iki çizgisi arasında)
+    let ticks = ''; for (let d = 0; d < 360; d += 5) { const big = d % 30 === 0, [x1, y1] = P(d, R_SIGN_O + 4), [x2, y2] = P(d, R_SIGN_O + (big ? -3 : 0)); ticks += `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}"/>`; }
+    for (let d = 0; d < 360; d += 2) { const [x1, y1] = P(d, R_OUT), [x2, y2] = P(d, R_OUT - (d % 10 === 0 ? 6 : 3)); ticks += `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke-opacity="${d % 10 === 0 ? .7 : .35}"/>`; }
+    s += `<g stroke="rgba(236,241,252,.6)" stroke-width=".8">${ticks}</g>`;
+    for (const d of [0, 90, 180, 270]) { const a = d * Math.PI / 180; s += `<line x1="${f1(cx + (R_SIGN_I) * Math.sin(a))}" y1="${f1(cy - (R_SIGN_I) * Math.cos(a))}" x2="${f1(cx + 292 * Math.sin(a))}" y2="${f1(cy - 292 * Math.cos(a))}" stroke="${ln}" stroke-width="1.1" filter="url(#lineGlow)"/>`; }
+    for (let d = 0; d < 360; d += 30) { if (d >= 150 && d <= 210) continue; const a = d * Math.PI / 180, rr = 258; s += `<text x="${f1(cx + rr * Math.sin(a))}" y="${f1(cy - rr * Math.cos(a))}" font-size="15.5" fill="rgba(238,242,252,.95)" text-anchor="middle" dominant-baseline="central" font-family="Manrope,system-ui,sans-serif" style="text-shadow:0 0 6px rgba(200,215,255,.6)">${d}°</text>`; }
     for (let i = 0; i < 12; i++) {
       const l0 = i * 30, [x1, y1] = P(l0, R_SIGN_I), [x2, y2] = P(l0, R_OUT);
-      s += `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${ln}"/>`;
-      const [gx, gy] = P(l0 + 15, (R_SIGN_O + R_SIGN_I) / 2); s += `<text x="${f1(gx)}" y="${f1(gy)}" font-size="19" fill="rgba(244,247,253,.95)" text-anchor="middle" dominant-baseline="central" class="sym">${SG[i]}</text>`;
-      const [ox, oy] = P(l0 + 15, (R_OUT + R_SIGN_O) / 2), [pts, ed] = CONST[i], sc = 30, Q = p => [ox + p[0] * sc, oy + p[1] * sc];
-      for (const [u, w] of ed) { const [a1, b1] = Q(pts[u]), [a2, b2] = Q(pts[w]); s += `<line x1="${f1(a1)}" y1="${f1(b1)}" x2="${f1(a2)}" y2="${f1(b2)}" stroke="rgba(240,245,255,.78)" stroke-width="1"/>`; }
-      pts.forEach((p, k) => { const [a1, b1] = Q(p), r = k === 0 ? 2.1 : 1.4; s += `<circle cx="${f1(a1)}" cy="${f1(b1)}" r="${r * 2.6}" fill="#e3ebff" opacity=".35" filter="url(#gl)"/><circle cx="${f1(a1)}" cy="${f1(b1)}" r="${r}" fill="#fff"/>`; });
+      s += `<line x1="${f1(x1)}" y1="${f1(y1)}" x2="${f1(x2)}" y2="${f1(y2)}" stroke="${ln}" stroke-width="1.05" filter="url(#lineGlow)"/>`;
+      const [gx, gy] = P(l0 + 15, (R_SIGN_O + R_SIGN_I) / 2 + 1); s += `<text x="${f1(gx)}" y="${f1(gy)}" font-size="21" fill="#f6f8fd" text-anchor="middle" dominant-baseline="central" class="sym" style="filter:drop-shadow(0 0 3px rgba(210,222,255,.8))">${SG[i]}</text>`;
+      const [ox, oy] = P(l0 + 15, (R_OUT + R_SIGN_O) / 2), [pts, ed] = CONST[i], sc = 31, Q = p => [ox + p[0] * sc, oy + p[1] * sc];
+      for (const [u, w] of ed) { const [a1, b1] = Q(pts[u]), [a2, b2] = Q(pts[w]); s += `<line x1="${f1(a1)}" y1="${f1(b1)}" x2="${f1(a2)}" y2="${f1(b2)}" stroke="rgba(244,247,255,.85)" stroke-width="1.05"/>`; }
+      pts.forEach((p, k) => { const [a1, b1] = Q(p), r = k === 0 ? 2.5 : 1.7; s += `<circle cx="${f1(a1)}" cy="${f1(b1)}" r="${r * 3.2}" fill="#e6eeff" opacity=".5" filter="url(#gl)"/><circle cx="${f1(a1)}" cy="${f1(b1)}" r="${r}" fill="#fff"/>`; });
     }
-    s += `<circle cx="${cx}" cy="${cy}" r="${R_SIGN_I - 2}" fill="url(#mH)"/><circle cx="${cx}" cy="${cy}" r="${R_MOON + 6}" fill="#f2f6ff" opacity=".35" filter="url(#sb)"/><circle cx="${cx}" cy="${cy}" r="${R_MOON}" fill="url(#mG)"/>`;
-    s += `<g clip-path="url(#mC)"><image href="moon.jpg" x="${cx - R_MOON - 1}" y="${cy - R_MOON - 1}" width="${2 * R_MOON + 2}" height="${2 * R_MOON + 2}" preserveAspectRatio="xMidYMid slice"/>`;
+    // Ay: geniş ışık halesi (bloom) + gerçek Ay görüntüsü + evre gölgesi
+    s += `<circle class="bloom" cx="${cx}" cy="${cy}" r="${R_MOON * 1.95}" fill="url(#mBloom)" opacity=".9"/><circle cx="${cx}" cy="${cy}" r="${R_MOON + 5}" fill="#f4f8ff" opacity=".55" filter="url(#sb)"/><circle cx="${cx}" cy="${cy}" r="${R_MOON}" fill="url(#mG)"/>`;
+    s += `<g clip-path="url(#mC)"><image href="moon.jpg" x="${cx - R_MOON - 1}" y="${cy - R_MOON - 1}" width="${2 * R_MOON + 2}" height="${2 * R_MOON + 2}" preserveAspectRatio="xMidYMid slice" style="filter:brightness(1.12) contrast(1.05)"/>`;
     const k = (1 - Math.cos(ph * Math.PI / 180)) / 2, wax = ph < 180, r = R_MOON, rx = r * Math.abs(1 - 2 * k), so = wax ? 0 : 1, si = (k > .5) === wax ? 0 : 1;
-    if (k < .985) s += `<path d="M${cx} ${cy - r} A${r} ${r} 0 0 ${so} ${cx} ${cy + r} A${rx.toFixed(2)} ${r} 0 0 ${si} ${cx} ${cy - r}Z" fill="#0a1228" opacity=".88"/>`;
-    s += `<circle cx="${cx}" cy="${cy}" r="${R_MOON}" fill="none" stroke="#fff" stroke-opacity=".35"/></g>`;
+    if (k < .985) s += `<path d="M${cx} ${cy - r} A${r} ${r} 0 0 ${so} ${cx} ${cy + r} A${rx.toFixed(2)} ${r} 0 0 ${si} ${cx} ${cy - r}Z" fill="#0a1228" opacity=".86"/>`;
+    s += `<circle cx="${cx}" cy="${cy}" r="${R_MOON}" fill="none" stroke="#fff" stroke-opacity=".5"/></g>`;
+    // yörünge halkası ve gerçek konumdaki küçük Ay
     const t = th(moon.lon), ex = 196 * Math.sin(t), ey = -99 * Math.cos(t), rot = -38 * Math.PI / 180;
     const dx = cx + ex * Math.cos(rot) - ey * Math.sin(rot), dy = cy + ex * Math.sin(rot) + ey * Math.cos(rot);
-    s += `<ellipse cx="${cx}" cy="${cy}" rx="196" ry="99" transform="rotate(-38 ${cx} ${cy})" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="5" opacity=".35" filter="url(#gl)"/><ellipse cx="${cx}" cy="${cy}" rx="196" ry="99" transform="rotate(-38 ${cx} ${cy})" fill="none" stroke="rgba(248,250,255,.95)" stroke-width="2.2"/>`;
-    s += `<circle cx="${f1(dx)}" cy="${f1(dy)}" r="18" fill="#eef3ff" opacity=".45" filter="url(#sb)"/><circle cx="${f1(dx)}" cy="${f1(dy)}" r="8" fill="url(#mG)" stroke="#fff" stroke-width="1"/>`;
+    s += `<ellipse cx="${cx}" cy="${cy}" rx="196" ry="99" transform="rotate(-38 ${cx} ${cy})" fill="none" stroke="#fff" stroke-width="7" opacity=".35" filter="url(#gl2)"/><ellipse cx="${cx}" cy="${cy}" rx="196" ry="99" transform="rotate(-38 ${cx} ${cy})" fill="none" stroke="#fff" stroke-width="2.6" opacity=".55" filter="url(#gl)"/><ellipse cx="${cx}" cy="${cy}" rx="196" ry="99" transform="rotate(-38 ${cx} ${cy})" fill="none" stroke="rgba(250,252,255,.98)" stroke-width="1.9"/>`;
+    s += `<circle class="odot" cx="${f1(dx)}" cy="${f1(dy)}" r="22" fill="#eef3ff" opacity=".6" filter="url(#sb)"/><circle cx="${f1(dx)}" cy="${f1(dy)}" r="9" fill="url(#mG)" stroke="#fff" stroke-width="1.2"/>`;
     return s + '</svg>';
   }
   function gauge(label, val, sub) {
@@ -108,10 +124,10 @@
     const pt = d => { const t = (a0 + d) * Math.PI / 180; return [(cx + r * Math.cos(t)).toFixed(2), (cy + r * Math.sin(t)).toFixed(2)]; };
     const arc = d => { const [x0, y0] = pt(0), [x1, y1] = pt(d); return `M${x0} ${y0} A${r} ${r} 0 ${d > 180 ? 1 : 0} 1 ${x1} ${y1}`; };
     const id = 'g' + label.replace(/[^a-z]/gi, '').slice(0, 6), blue = /Saat|Transit/.test(label);
-    return `<div class="gauge"><small>${label}</small><svg viewBox="0 0 68 43"><defs><linearGradient id="${id}" x1="0" x2="1"><stop offset="0" stop-color="${blue ? '#d9e6ff' : '#ffffff'}"/><stop offset="1" stop-color="${blue ? '#8fb2ec' : '#c9d2e2'}"/></linearGradient><filter id="${id}f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.6"/></filter></defs>
-      <path d="${arc(sw)}" fill="none" stroke="rgba(150,165,195,.22)" stroke-width="3.4" stroke-linecap="round"/>
-      ${f > 0 ? `<path d="${arc(sw * f)}" fill="none" stroke="url(#${id})" stroke-width="4" stroke-linecap="round" filter="url(#${id}f)" opacity=".75"/><path d="${arc(sw * f)}" fill="none" stroke="url(#${id})" stroke-width="3.4" stroke-linecap="round"/>` : ''}
-      <text x="34" y="31" text-anchor="middle" font-size="10.5" font-weight="700" fill="#fff" font-family="Manrope,system-ui,sans-serif">${val}%</text><text x="34" y="40.5" text-anchor="middle" font-size="7.4" fill="#c3cbdb" font-family="Manrope,system-ui,sans-serif">${esc(sub)}</text></svg></div>`;
+    return `<div class="gauge"><small>${label}</small><svg viewBox="0 0 68 43"><defs><linearGradient id="${id}" x1="0" x2="1"><stop offset="0" stop-color="${blue ? '#d9e6ff' : '#ffffff'}"/><stop offset="1" stop-color="${blue ? '#8fb2ec' : '#c9d2e2'}"/></linearGradient><filter id="${id}f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter></defs>
+      <path d="${arc(sw)}" fill="none" stroke="rgba(130,145,178,.26)" stroke-width="4.6" stroke-linecap="round"/>
+      ${f > 0 ? `<path d="${arc(sw * f)}" fill="none" stroke="url(#${id})" stroke-width="7" stroke-linecap="round" filter="url(#${id}f)" opacity=".85"/><path d="${arc(sw * f)}" fill="none" stroke="url(#${id})" stroke-width="4.6" stroke-linecap="round"/>` : ''}
+      <text x="34" y="31" text-anchor="middle" font-size="11.5" font-weight="700" style="text-shadow:0 0 6px rgba(220,230,255,.7)" fill="#fff" font-family="Manrope,system-ui,sans-serif">${val}%</text><text x="34" y="40.5" text-anchor="middle" font-size="7.4" fill="#c3cbdb" font-family="Manrope,system-ui,sans-serif">${esc(sub)}</text></svg></div>`;
   }
   function viewAn() {
     const jd = nowJD(), here = S.settings.here, s = calcSettings({ system: 'modern', zodiac: 'T' });
