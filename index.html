@@ -251,6 +251,8 @@ nav.tabs svg{width:calc(var(--u)*16)!important;height:calc(var(--u)*16)!importan
 .dh2{text-align:center;margin-top:22px}
 .dgrid21{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:10px}.dgrid21 .chip{padding:8px 0;justify-content:center;text-align:center}.dgrid21 .chip.cur{outline:2px solid #e8eefc;outline-offset:1px}.dgrid21 .chip:disabled{opacity:.35}
 .tab-gunluk .sub{flex-wrap:nowrap;overflow-x:auto}
+details.why{margin:-4px 0 12px}details.why summary{font-size:12.5px;color:#cfdcff;cursor:pointer;list-style:none}details.why summary::before{content:"ⓘ ";}details.why ul{margin:6px 0 0;padding-left:18px;font-size:12.5px;color:#d3dae7}
+.repopts{margin:4px 0 8px}
 /* === Referans görselin gökyüzü: arka plan resmi === */
 .moonsky{background:#0c0f1e url(sky-bg.jpg) no-repeat!important;background-size:100vw auto!important;background-position:center -12.6vw!important}
 .moonsky .neb,.moonsky .stars,.moonsky .glow,.moonsky .beam,.moonsky .flare{display:none!important}
@@ -343,8 +345,10 @@ details summary{color:#e6ecf8}
 <script src="txH.js"></script>
 <script src="txI.js"></script>
 <script src="txJ.js"></script>
+<script src="txK.js"></script>
 <script src="txedit.js"></script>
 <script src="app.js"></script>
+<script src="interp.js"></script>
 <script src="views.js"></script>
 <script src="daily.js"></script>
 <script>if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});</script>

@@ -55,6 +55,7 @@ var AM = (function () {
     if (kind === 'acc') return w + '’' + (endsV ? 'y' : '') + I;
     if (kind === 'dat') return w + '’' + (endsV ? 'y' : '') + Aa;
     if (kind === 'loc') return w + '’' + ('fstkçşhp'.includes(last) ? 't' : 'd') + Aa;
+    if (kind === 'abl') return w + '’' + ('fstkçşhp'.includes(last) ? 't' : 'd') + Aa + 'n';
     return w;
   }
   const SG = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'].map(x => x + '︎');
